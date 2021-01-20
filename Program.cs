@@ -13,8 +13,14 @@ namespace DemoApp
         static void Main(string[] args)
         {
             var chan = new Channel("localhost:8080", ChannelCredentials.Insecure);
-            var flows = new FlowFetch(chan, "ProtoLCA-Demo.csv");
-            flows.ElementaryFlow("Carbon dioxide", "kg", "air/unspecified").Wait();
+            var flows = FlowFetch.Build(chan, "ProtoLCA-Demo.csv")
+                .GetAwaiter()
+                .GetResult();
+
+            var (flowRef, factor) = flows.ElementaryFlow("Carbon dioxide", "kg", "air/unspecified")
+                .GetAwaiter()
+                .GetResult();
+
             chan.ShutdownAsync().Wait();
             Console.ReadKey();
         }

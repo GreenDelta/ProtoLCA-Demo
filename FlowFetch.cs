@@ -18,16 +18,26 @@ namespace DemoApp
         private readonly FlowMap flowMap;
         private readonly DataService data;
         private readonly FlowMapService mappings;
+        private readonly UnitIndex units;
 
-        public FlowFetch(Channel chan, string mappingName)
+        private FlowFetch(Channel chan, FlowMap flowMap, UnitIndex units)
         {
             data = new DataService(chan);
             mappings = new FlowMapService(chan);
-            flowMap = GetFlowMap(mappingName, mappings);
+            this.flowMap = flowMap;
+            this.units = units;
         }
 
-        private FlowMap GetFlowMap(string name, FlowMapService service)
+        async public static Task<FlowFetch> Build(Channel chan, string mapping)
         {
+            var flowMap = GetFlowMap(mapping, chan);
+            var units = await UnitIndex.Build(chan);
+            return new FlowFetch(chan, flowMap, units);
+        }
+
+        private static FlowMap GetFlowMap(string name, Channel chan)
+        {
+            var service = new FlowMapService(chan);
             var status = service.Get(new FlowMapInfo
             {
                 Name = name
