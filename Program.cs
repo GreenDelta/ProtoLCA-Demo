@@ -13,6 +13,14 @@ namespace DemoApp
         static void Main(string[] args)
         {
             var chan = new Channel("localhost:8080", ChannelCredentials.Insecure);
+            var flows = new FlowFetch(chan, "ProtoLCA-Demo.csv");
+            flows.ElementaryFlow("Carbon dioxide", "kg", "air/unspecified").Wait();
+            chan.ShutdownAsync().Wait();
+            Console.ReadKey();
+        }
+
+        private static void CreateExampleProcess(Channel chan)
+        {
             var client = new DataService.DataServiceClient(chan);
 
             // get flow property mass
@@ -75,9 +83,6 @@ namespace DemoApp
 
             var json = new JsonFormatter(new JsonFormatter.Settings(false));
             Console.WriteLine(json.Format(process));
-
-            chan.ShutdownAsync().Wait();
-            Console.ReadKey();
         }
 
         private static Flow GetFlow(
