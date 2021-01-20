@@ -7,7 +7,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{65E8CDFE-A974-448C-866F-E5B0FD8004B5}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>ProtoLCA_Demo</RootNamespace>
+    <RootNamespace>DemoApp</RootNamespace>
     <AssemblyName>ProtoLCA-Demo</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -34,6 +34,9 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>DemoApp.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Google.Protobuf, Version=3.14.0.0, Culture=neutral, PublicKeyToken=a7d26565bac4d604, processorArchitecture=MSIL">
@@ -77,8 +80,8 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Protobuf Include="Proto\olca.proto" GrpcServices="Client" />
-    <Protobuf Include="Proto\services.proto" GrpcServices="Client" />
+    <Protobuf Include="Proto\olca.proto" GrpcServices="Client" ProtoRoot="Proto\" />
+    <Protobuf Include="Proto\services.proto" GrpcServices="Client" ProtoRoot="Proto\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="packages\Grpc.Core.2.34.1\build\net45\Grpc.Core.targets" Condition="Exists('packages\Grpc.Core.2.34.1\build\net45\Grpc.Core.targets')" />
