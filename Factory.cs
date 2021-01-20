@@ -102,7 +102,7 @@ namespace DemoApp
             {
                 InternalId = process.LastInternalId,
                 Amount = amount,
-                Flow = new FlowRef
+                Flow = new Ref
                 {
                     Id = flow.Id,
                     Name = flow.Name
