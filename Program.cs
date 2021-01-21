@@ -7,6 +7,8 @@ using Grpc.Core;
 using ProtoLCA;
 using ProtoLCA.Services;
 
+using static DemoApp.Util;
+
 namespace DemoApp
 {
     class Program
@@ -14,7 +16,8 @@ namespace DemoApp
         static void Main(string[] args)
         {
             var chan = new Channel("localhost:8080", ChannelCredentials.Insecure);
-            Task.Run(() => CreateExampleFlows(chan)).Wait();
+            // Task.Run(() => CreateExampleFlows(chan)).Wait();
+            Task.Run(() => PrintAllMappingFiles(chan)).Wait();
             Console.ReadKey();
         }
 
@@ -28,6 +31,17 @@ namespace DemoApp
             // this should create a new flow
             await flows.ElementaryFlow("SARS-CoV-2 viruses", "Item(s)", "air/urban");
 
+        }
+
+        private static async void PrintAllMappingFiles(Channel chan)
+        {
+            var service = new FlowMapService.FlowMapServiceClient(chan);
+            var mappings = service.GetAll(new Empty()).ResponseStream;
+            while (await mappings.MoveNext())
+            {
+                var name = mappings.Current.Name;
+                Log($"Found mapping: {name}");
+            }
         }
 
         private static void CreateExampleProcess(Channel chan)
