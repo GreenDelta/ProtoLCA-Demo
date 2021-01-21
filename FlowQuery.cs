@@ -42,6 +42,11 @@ namespace DemoApp
             this.Location = "";
         }
 
+        public static FlowQuery For(FlowType type, string name)
+        {
+            return new FlowQuery(type, name);
+        }
+
         public static FlowQuery ForElementary(string name)
         {
             return new FlowQuery(FlowType.ElementaryFlow, name);

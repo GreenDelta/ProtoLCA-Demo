@@ -87,7 +87,8 @@ namespace DemoApp
 
         public UnitEntry EntryOf(string unit)
         {
-            return index[unit];
+            index.TryGetValue(unit, out UnitEntry e);
+            return e;
         }
 
         public FlowProperty PropertyOf(string unit)

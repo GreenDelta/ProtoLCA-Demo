@@ -13,11 +13,12 @@ namespace DemoApp
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             var chan = new Channel("localhost:8080", ChannelCredentials.Insecure);
+            Task.Run(() => CreateExampleProcess(chan)).Wait();
             // Task.Run(() => CreateExampleFlows(chan)).Wait();
-            Task.Run(() => PrintAllMappingFiles(chan)).Wait();
+            // Task.Run(() => PrintAllMappingFiles(chan)).Wait();
             Console.ReadKey();
         }
 
@@ -50,8 +51,9 @@ namespace DemoApp
             }
         }
 
-        private static void CreateExampleProcess(Channel chan)
+        private static async void CreateExampleProcess(Channel chan)
         {
+            var flows = await FlowFetch.Create(chan, "ProtoLCA-Demo.csv");
             var client = new DataService.DataServiceClient(chan);
 
             // get flow property mass
@@ -76,11 +78,16 @@ namespace DemoApp
                 ("Reductant", FlowType.ProductFlow, 16),
                 ("Washing Solution", FlowType.ProductFlow, 75),
             };
-            foreach (var (name, flowType, amount) in inputs)
+            foreach (var (name, type, amount) in inputs)
             {
-                var flow = GetFlow(client, name, flowType, mass);
-                var input = Build.InputOf(process, flow, amount);
-                process.Exchanges.Add(input);
+                var mapping = await flows.GetFlow(FlowQuery.For(type, name));
+                if (mapping == null)
+                    continue;
+                var e = ToExchange(amount, mapping);
+                process.LastInternalId += 1;
+                e.InternalId = process.LastInternalId;
+                e.Input = true;
+                process.Exchanges.Add(e);
             }
 
             // add outputs
@@ -97,23 +104,34 @@ namespace DemoApp
                 ("Scrubber Sludge", FlowType.WasteFlow, 56.261517810249792),
                 ("Fine Dust", FlowType.ElementaryFlow, 0.18398927491951844),
             };
-            foreach (var (name, flowType, amount) in outputs)
+            foreach (var (name, type, amount) in outputs)
             {
-                var flow = GetFlow(client, name, flowType, mass);
-                var output = Build.OutputOf(process, flow, amount);
-                if ("Pig Iron".Equals(name))
-                {
-                    output.QuantitativeReference = true;
-                }
-                process.Exchanges.Add(output);
+                var mapping = await flows.GetFlow(FlowQuery.For(type, name));
+                if (mapping == null)
+                    continue;
+                var e = ToExchange(amount, mapping);
+                process.LastInternalId += 1;
+                e.InternalId = process.LastInternalId;
+                e.Input = false;
+                process.Exchanges.Add(e);
             }
 
             var insertStatus = client.PutProcess(process);
             if (!insertStatus.Ok)
                 throw new Exception(insertStatus.Error);
+        }
 
-            var json = new JsonFormatter(new JsonFormatter.Settings(false));
-            Console.WriteLine(json.Format(process));
+        private static Exchange ToExchange(double amount, FlowMapEntry mapping)
+        {
+            var target = mapping.To;
+            var e = new Exchange
+            {
+                Amount = amount,
+                Flow = target.Flow,
+                FlowProperty = target.FlowProperty,
+                Unit = target.Unit,
+            };
+            return e;
         }
 
         private static Flow GetFlow(
