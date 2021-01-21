@@ -53,46 +53,81 @@ namespace DemoApp
             return map;
         }
 
-        public async Task<(Ref, double)> ElementaryFlow(
+        public async Task<Tuple<Ref, double>> ElementaryFlow(
             string name, string unit, string category = "")
         {
             var info = $"{name}/{unit}/{category}";
             var flowID = MakeID(name, unit, category);
 
-            // try to find a mapped flow
+            // first try to find a flow from the mapping
             foreach (var m in flowMap.Mappings)
             {
                 if (flowID.Equals(m.From.Flow.Id))
                 {
-                    Console.WriteLine($"Found mapping for {info}");
-                    return (m.To.Flow, m.ConversionFactor);
+                    Log($"Found mapping for {info}");
+                    return Tuple.Create(m.To.Flow, m.ConversionFactor);
                 }
             }
 
-            // search for a flow
+            // if there is no mapping for the flow, search if we
+            // can find a matching flow in the database
+            // first check if the unit is known
+            var unitEntry = units.EntryOf(unit);
+            if (unitEntry == null)
+            {
+                Log($"ERROR: Unknown unit {unit}; unmapped flow {info}");
+                return null;
+            }
+
+            // run the search for the flow name and try to find
+            // the best candidate
             var search = data.Search(new SearchRequest
             {
                 Type = ModelType.Flow,
                 Query = name,
             }).ResponseStream;
-            Ref candidate = null;
+            Ref candiate = null;
             while (await search.MoveNext())
             {
-                // check the unit and the compartment
-                if (IsBetterMatch(candidate, search.Current, name, category))
-                {
-                    candidate = search.Current;
-                }
+                var next = search.Current;
+                if (!IsBetterMatch(candiate, next, name, category))
+                    continue;
+                // the units have to be convertible
+                if (!units.AreConvertible(unit, next.RefUnit))
+                    continue;
+                candiate = next;
             }
 
-            if (candidate != null)
+            // if we found a matching flow, we add it to the mapping
+            if (candiate != null)
             {
-                Console.WriteLine(
-                    $"Found matching flow {candidate.Id} for {info}");
+                Log($"Found matching flow {candiate.Id} for {info}");
+                var mapEntry = new FlowMapEntry
+                {
+                    ConversionFactor = unitEntry.Factor,
+                    From = new FlowMapRef
+                    {
+                        Flow = new Ref
+                        {
+                            Id = flowID,
+                            Name = name,
+                            FlowType = FlowType.ElementaryFlow,
+                            RefUnit = unit,
+                        },
+                        Unit = new Ref { Id = unit, Name = unit },
+                    },
+                    To = new FlowMapRef
+                    {
+                        Flow = candiate,
+                    }
+                };
+                flowMap.Mappings.Add(mapEntry);
+                mappings.Put(flowMap);
+                Log($"Updated flow mapping {flowMap.Name}");
             }
 
 
-            return (candidate, 1.0);
+            return Tuple.Create(candiate, unitEntry.Factor);
 
         }
 

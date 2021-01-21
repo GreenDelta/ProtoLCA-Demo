@@ -8,7 +8,8 @@ using Grpc.Core;
 using ProtoLCA;
 using ProtoLCA.Services;
 
-using Index = System.Collections.Generic.Dictionary<string, (ProtoLCA.FlowProperty, double)>;
+using Index = System.Collections.Generic.Dictionary<string, DemoApp.UnitEntry>;
+using static DemoApp.Util;
 
 namespace DemoApp
 {
@@ -53,13 +54,13 @@ namespace DemoApp
                     {
                         if (!unitErr)
                         {
-                            Console.WriteLine($"WARNING: there are " +
-                                $"duplicate units in the database, e.g. {unit}");
+                            Log("WARNING: there are " +
+                                $"duplicate units in the database, e.g. {unit.Name}");
                             unitErr = true;
                         }
                         continue;
                     }
-                    idx.Add(unit.Name, (prop, unit.ConversionFactor));
+                    idx.Add(unit.Name, new UnitEntry(prop, unit.ConversionFactor));
                 }
             }
 
@@ -71,23 +72,45 @@ namespace DemoApp
             if (string.IsNullOrWhiteSpace(unit1)
                 || string.IsNullOrWhiteSpace(unit2))
                 return false;
-            var (prop1, _) = index[unit1];
-            var (prop2, _) = index[unit2];
-            if (prop1 == null || prop2 == null)
+
+            var e1 = index[unit1];
+            if (e1 == null)
                 return false;
-            return prop1 == prop2;
+
+            var e2 = index[unit2];
+            if (e2 == null)
+                return false;
+
+            // checking by identity should be good here
+            return e1.FlowProperty == e2.FlowProperty;
+        }
+
+        public UnitEntry EntryOf(string unit)
+        {
+            return index[unit];
         }
 
         public FlowProperty PropertyOf(string unit)
         {
-            var (prop, _) = index[unit];
-            return prop;
+            return index[unit]?.FlowProperty;
         }
 
         public double FactorOf(string unit)
         {
-            var (_, f) = index[unit];
-            return f;
+            var e = index[unit];
+            return e == null ? 0 : e.Factor;
+        }
+    }
+
+    public class UnitEntry
+    {
+        public readonly FlowProperty FlowProperty;
+        public readonly double Factor;
+
+        internal UnitEntry(FlowProperty prop, double factor)
+        {
+            this.FlowProperty = prop;
+            this.Factor = factor;
         }
     }
 

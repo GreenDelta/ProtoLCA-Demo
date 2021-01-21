@@ -65,5 +65,10 @@ namespace DemoApp
             return new Guid(hash).ToString();
         }
 
+        public static void Log(string s)
+        {
+            Console.WriteLine(s);
+        }
+
     }
 }
