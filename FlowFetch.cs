@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using System.Threading.Tasks;
 
 using Grpc.Core;
@@ -13,126 +12,6 @@ using static DemoApp.Util;
 
 namespace DemoApp
 {
-
-    public class FlowQuery
-    {
-        public string Name { get; private set; }
-        public string Unit { get; private set; }
-        public string Category { get; private set; }
-        public FlowType Type { get; private set; }
-        public string Location { get; private set; }
-
-        private string _id;
-        public string FlowID
-        {
-            get
-            {
-                if (_id != null)
-                    return _id;
-                _id = MakeID(this.ToString());
-                return _id;
-            }
-        }
-
-        private FlowQuery(FlowType type)
-        {
-            this.Type = type;
-            this.Name = "";
-            this.Unit = "";
-            this.Category = "";
-            this.Location = "";
-        }
-
-        public static FlowQuery ForElementary()
-        {
-            return new FlowQuery(FlowType.ElementaryFlow);
-        }
-
-        public static FlowQuery ForProduct()
-        {
-            return new FlowQuery(FlowType.ProductFlow);
-        }
-
-        public static FlowQuery ForWaste()
-        {
-            return new FlowQuery(FlowType.WasteFlow);
-        }
-
-        public FlowQuery WithName(string name)
-        {
-            this.Name = name == null
-                ? ""
-                : name.Trim();
-            return this;
-        }
-
-        public FlowQuery WithCategory(string category)
-        {
-            this.Category = category == null
-                ? ""
-                : category.Trim();
-            return this;
-        }
-
-        public FlowQuery WithUnit(string unit)
-        {
-            this.Unit = unit == null
-                ? ""
-                : unit.Trim();
-            return this;
-        }
-
-        public FlowQuery WithLocation(string location)
-        {
-            this.Location = location == null
-                ? ""
-                : location.Trim();
-            return this;
-        }
-
-        public override string ToString()
-        {
-            var s = new StringBuilder();
-            var parts = new string[] {
-                Type.ToString(),
-                Name,
-                Unit,
-                Location,
-                Category };
-            for (int i = 0; i < parts.Length; i++)
-            {
-                if (String.IsNullOrEmpty(parts[i]))
-                    continue;
-                if (i != 0)
-                {
-                    s.Append(" - ");
-                }
-                s.Append(parts[i]);
-            }
-            return s.ToString();
-        }
-
-        public FlowMapRef ToFlowMapRef()
-        {
-            var mapRef = new FlowMapRef
-            {
-                Flow = new Ref
-                {
-                    Id = FlowID,
-                    Name = Name,
-                    FlowType = Type,
-                    RefUnit = Unit,
-                },
-                Unit = new Ref { Id = Unit, Name = Unit },
-            };
-
-            if (!String.IsNullOrEmpty(Location))
-            {
-                mapRef.Flow.Location = Location;
-            }
-            return mapRef;
-        }
-    }
 
     class FlowFetch
     {
@@ -174,18 +53,13 @@ namespace DemoApp
             return map;
         }
 
-        public async Task<Tuple<Ref, double>> ElementaryFlow(FlowQuery query)
+        public async FlowMapEntry ElementaryFlow(FlowQuery query)
         {
 
             // first try to find a flow from the mapping
-            foreach (var m in flowMap.Mappings)
-            {
-                if (query.FlowID.Equals(m.From.Flow.Id))
-                {
-                    Log($"Found mapping for {query}");
-                    return Tuple.Create(m.To.Flow, m.ConversionFactor);
-                }
-            }
+            var entry = query.FindEntryIn(flowMap);
+            if (entry != null)
+                return entry;
 
             // if there is no mapping for the flow, search if we
             // can find a matching flow in the database
@@ -208,7 +82,7 @@ namespace DemoApp
             while (await search.MoveNext())
             {
                 var next = search.Current;
-                if (next.FlowType != FlowType.ElementaryFlow)
+                if (next.FlowType != query.Type)
                     continue;
                 if (!IsBetterMatch(candiate, next, query))
                     continue;
