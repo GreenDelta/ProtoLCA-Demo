@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 using Google.Protobuf;
 using Grpc.Core;
@@ -13,16 +14,20 @@ namespace DemoApp
         static void Main(string[] args)
         {
             var chan = new Channel("localhost:8080", ChannelCredentials.Insecure);
-            var flows = FlowFetch.Build(chan, "ProtoLCA-Demo.csv")
-                .GetAwaiter()
-                .GetResult();
-
-            var (flowRef, factor) = flows.ElementaryFlow("Carbon dioxide", "kg", "air/unspecified")
-                .GetAwaiter()
-                .GetResult();
-
-            chan.ShutdownAsync().Wait();
+            Task.Run(() => CreateExampleFlows(chan)).Wait();
             Console.ReadKey();
+        }
+
+        private static async void CreateExampleFlows(Channel chan)
+        {
+            var flows = await FlowFetch.Create(chan, "ProtoLCA-Demo.csv");
+
+            // this should find a matching flow in the reference data
+            await flows.ElementaryFlow("Carbon dioxide", "g", "air/unspecified");
+
+            // this should create a new flow
+            await flows.ElementaryFlow("SARS-CoV-2 viruses", "Item(s)", "air/urban");
+
         }
 
         private static void CreateExampleProcess(Channel chan)

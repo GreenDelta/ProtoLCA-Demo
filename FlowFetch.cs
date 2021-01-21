@@ -1,5 +1,4 @@
 ﻿using System;
-
 using System.Threading.Tasks;
 
 using Grpc.Core;
@@ -28,7 +27,7 @@ namespace DemoApp
             this.units = units;
         }
 
-        async public static Task<FlowFetch> Build(Channel chan, string mapping)
+        async public static Task<FlowFetch> Create(Channel chan, string mapping)
         {
             var flowMap = GetFlowMap(mapping, chan);
             var units = await UnitIndex.Build(chan);
@@ -90,6 +89,8 @@ namespace DemoApp
             while (await search.MoveNext())
             {
                 var next = search.Current;
+                if (next.FlowType != FlowType.ElementaryFlow)
+                    continue;
                 if (!IsBetterMatch(candiate, next, name, category))
                     continue;
                 // the units have to be convertible
@@ -124,11 +125,40 @@ namespace DemoApp
                 flowMap.Mappings.Add(mapEntry);
                 mappings.Put(flowMap);
                 Log($"Updated flow mapping {flowMap.Name}");
+
+                return Tuple.Create(candiate, unitEntry.Factor);
             }
 
+            // finally, if we cannot find a corresponding flow,
+            // we create a new one, and add it to the flow mapping
+            var flow = Build.ElementaryFlowOf(name, unitEntry.FlowProperty);
+            Log($"Created new flow for {info}");
+            var flowRef = Build.RefOf(flow.Id, flow.Name);
+            flowRef.FlowType = FlowType.ElementaryFlow;
+            var newEntry = new FlowMapEntry
+            {
+                ConversionFactor = unitEntry.Factor,
+                From = new FlowMapRef
+                {
+                    Flow = new Ref
+                    {
+                        Id = flowID,
+                        Name = name,
+                        FlowType = FlowType.ElementaryFlow,
+                        RefUnit = unit,
+                    },
+                    Unit = new Ref { Id = unit, Name = unit },
+                },
+                To = new FlowMapRef
+                {
+                    Flow = flowRef,
+                },
+            };
+            flowMap.Mappings.Add(newEntry);
+            mappings.Put(flowMap);
+            Log($"Updated flow mapping {flowMap.Name}");
 
-            return Tuple.Create(candiate, unitEntry.Factor);
-
+            return Tuple.Create(flowRef, unitEntry.Factor);
         }
 
         // Try to determine if the given candidate is a better match than
