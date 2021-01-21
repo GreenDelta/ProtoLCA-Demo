@@ -60,7 +60,7 @@ namespace DemoApp
                         }
                         continue;
                     }
-                    idx.Add(unit.Name, new UnitEntry(prop, unit.ConversionFactor));
+                    idx.Add(unit.Name, new UnitEntry(prop, unit));
                 }
             }
 
@@ -105,12 +105,16 @@ namespace DemoApp
     public class UnitEntry
     {
         public readonly FlowProperty FlowProperty;
-        public readonly double Factor;
+        public readonly Unit Unit;
+        public double Factor
+        {
+            get { return Unit.ConversionFactor; }
+        }
 
-        internal UnitEntry(FlowProperty prop, double factor)
+        internal UnitEntry(FlowProperty prop, Unit unit)
         {
             this.FlowProperty = prop;
-            this.Factor = factor;
+            this.Unit = unit;
         }
     }
 

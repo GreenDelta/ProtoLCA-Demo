@@ -26,10 +26,18 @@ namespace DemoApp
             var flows = await FlowFetch.Create(chan, "ProtoLCA-Demo.csv");
 
             // this should find a matching flow in the reference data
-            await flows.ElementaryFlow("Carbon dioxide", "g", "air/unspecified");
+            await flows.ElementaryFlow(
+                FlowQuery.ForElementary()
+                .WithName("Carbon dioxide")
+                .WithUnit("g")
+                .WithCategory("air/unspecified"));
 
             // this should create a new flow
-            await flows.ElementaryFlow("SARS-CoV-2 viruses", "Item(s)", "air/urban");
+            await flows.ElementaryFlow(
+                FlowQuery.ForElementary()
+                .WithName("SARS-CoV-2 viruses")
+                .WithUnit("Item(s)")
+                .WithCategory("air/urban"));
 
         }
 
