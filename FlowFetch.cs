@@ -75,7 +75,7 @@ namespace DemoApp
 
             // search in the database for a matching flow or create a
             // new one if no matching flow can be found
-            var flow = await Search(query);
+            var flow = await FlowSearch(query);
             if (flow != null)
             {
                 Log($"  Found matching flow {flow.Name}:{flow.Id}");
@@ -87,6 +87,14 @@ namespace DemoApp
                     query.Type,
                     unitEntry.FlowProperty);
                 Log($"  Created new flow");
+            }
+            var flowRef = ToRef(flow);
+
+            // if it is a product or waste, also search for an provider
+            Ref provider = null;
+            if (query.Type != FlowType.ElementaryFlow)
+            {
+                provider = await ProviderSearch(flowRef, query);
             }
 
             // finally, update the mapping entry
@@ -100,17 +108,19 @@ namespace DemoApp
                     Flow = Build.RefOf(flow.Id, flow.Name),
                 }
             };
+            if (provider != null)
+            {
+                mapping.To.Provider = provider;
+            }
+
             flowMap.Mappings.Add(mapping);
             mappings.Put(flowMap);
             Log($"  Updated flow mapping {flowMap.Name}");
 
-            // TODO: search for providers in case of
-            // technosphere flows
-
             return mapping;
         }
 
-        private async Task<Flow> Search(FlowQuery query)
+        private async Task<Flow> FlowSearch(FlowQuery query)
         {
             var search = data.Search(new SearchRequest
             {
@@ -123,7 +133,7 @@ namespace DemoApp
                 var next = search.Current;
                 if (next.FlowType != query.Type)
                     continue;
-                if (!IsBetterMatch(candiate, next, query))
+                if (!IsBetterFlow(candiate, next, query))
                     continue;
                 // the units have to be convertible
                 if (!units.AreConvertible(query.Unit, next.RefUnit))
@@ -138,10 +148,37 @@ namespace DemoApp
             return status.Ok ? status.Flow : null;
         }
 
+        private async Task<Ref> ProviderSearch(Ref flow, FlowQuery query)
+        {
+            var search = data.GetProvidersFor(flow).ResponseStream;
+            Ref provider = null;
+            Func<Ref, bool> matchesLocation = candidate =>
+            {
+                return query.Location.IsEmpty()
+                        || query.Location.EqualsIgnoreCase(provider.Location);
+            };
+            while (await search.MoveNext())
+            {
+                var next = search.Current;
+                if (provider == null)
+                {
+                    provider = next;
+                    if (matchesLocation(provider))
+                        break;
+                    continue;
+                }
+                if (matchesLocation(next))
+                {
+                    provider = next;
+                    break;
+                }
+            }
+            return provider;
+        }
+
         // Try to determine if the given candidate is a better match than
         // the current flow regarding the name and category path.
-        private bool IsBetterMatch(
-            Ref current, Ref candidate, FlowQuery query)
+        private bool IsBetterFlow(Ref current, Ref candidate, FlowQuery query)
         {
             if (current == null)
                 return true;
@@ -150,19 +187,66 @@ namespace DemoApp
             var words = query.Name.Split(' ');
             int currentScore = current.Name.MatchLengthOf(words);
             int candidateScore = candidate.Name.MatchLengthOf(words);
-            if (candidateScore != currentScore
-                || string.IsNullOrWhiteSpace(query.Category))
+            if (candidateScore != currentScore)
                 return candidateScore > currentScore;
 
+            // compare locations
+            if (query.Location.IsNotEmpty())
+            {
+                var isCu = query.Location
+                    .EqualsIgnoreCase(current.Location);
+                var isCa = query.Location
+                    .EqualsIgnoreCase(candidate.Location);
+                if (isCu != isCa)
+                    return isCa;
+            }
+
             // compare the categories
-            words = query.Category.Split('/');
-            currentScore = current
-                .CategoryPath.Join("/")
-                .MatchLengthOf(words);
-            candidateScore = candidate
-                .CategoryPath.Join("/")
-                .MatchLengthOf(words);
-            return candidateScore > currentScore;
+            if (query.Category.IsNotEmpty())
+            {
+                words = query.Category.Split('/');
+                currentScore = current
+                    .CategoryPath.Join("/")
+                    .MatchLengthOf(words);
+                candidateScore = candidate
+                    .CategoryPath.Join("/")
+                    .MatchLengthOf(words);
+                return candidateScore > currentScore;
+            }
+
+            return false;
         }
+
+        private Ref ToRef(Flow flow)
+        {
+            var r = new Ref
+            {
+                Id = flow.Id,
+                Name = flow.Name,
+                Description = flow.Description,
+                Version = flow.Version,
+                LastChange = flow.LastChange,
+                Library = flow.Library,
+                FlowType = flow.FlowType
+            };
+
+            var category = flow.Category.CategoryPath;
+            if (category.Count != 0)
+            {
+                foreach (var c in category)
+                {
+                    r.CategoryPath.Add(c);
+                }
+            }
+
+            if (flow.Location.Name.IsNotEmpty())
+            {
+                r.Location = flow.Location.Name;
+            }
+
+            // TODO: reference unit
+            return r;
+        }
+
     }
 }

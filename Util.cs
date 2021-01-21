@@ -70,6 +70,27 @@ namespace DemoApp
             return s == null ? "" : s.Trim();
         }
 
+        public static bool EqualsIgnoreCase(this string s, string other)
+        {
+            if (s == null && other == null)
+                return true;
+            if (s == null || other == null)
+                return false;
+            var sl = s.Trim().ToLowerInvariant();
+            var ol = other.Trim().ToLowerInvariant();
+            return sl.Equals(ol);
+        }
+
+        public static bool IsEmpty(this string s)
+        {
+            return String.IsNullOrWhiteSpace(s);
+        }
+
+        public static bool IsNotEmpty(this string s)
+        {
+            return !String.IsNullOrWhiteSpace(s);
+        }
+
         public static void Log(string s)
         {
             Console.WriteLine(s);
