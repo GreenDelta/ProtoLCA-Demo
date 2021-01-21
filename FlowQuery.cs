@@ -33,59 +33,45 @@ namespace DemoApp
             }
         }
 
-        private FlowQuery(FlowType type)
+        private FlowQuery(FlowType type, string name)
         {
             this.Type = type;
-            this.Name = "";
+            this.Name = name.OrEmpty();
             this.Unit = "";
             this.Category = "";
             this.Location = "";
         }
 
-        public static FlowQuery ForElementary()
+        public static FlowQuery ForElementary(string name)
         {
-            return new FlowQuery(FlowType.ElementaryFlow);
+            return new FlowQuery(FlowType.ElementaryFlow, name);
         }
 
-        public static FlowQuery ForProduct()
+        public static FlowQuery ForProduct(string name)
         {
-            return new FlowQuery(FlowType.ProductFlow);
+            return new FlowQuery(FlowType.ProductFlow, name);
         }
 
-        public static FlowQuery ForWaste()
+        public static FlowQuery ForWaste(string name)
         {
-            return new FlowQuery(FlowType.WasteFlow);
-        }
-
-        public FlowQuery WithName(string name)
-        {
-            this.Name = name == null
-                ? ""
-                : name.Trim();
-            return this;
+            return new FlowQuery(FlowType.WasteFlow, name);
         }
 
         public FlowQuery WithCategory(string category)
         {
-            this.Category = category == null
-                ? ""
-                : category.Trim();
+            this.Category = category.OrEmpty();
             return this;
         }
 
         public FlowQuery WithUnit(string unit)
         {
-            this.Unit = unit == null
-                ? ""
-                : unit.Trim();
+            this.Unit = unit.OrEmpty();
             return this;
         }
 
         public FlowQuery WithLocation(string location)
         {
-            this.Location = location == null
-                ? ""
-                : location.Trim();
+            this.Location = location.OrEmpty();
             return this;
         }
 
@@ -154,6 +140,5 @@ namespace DemoApp
             }
             return null;
         }
-
     }
 }

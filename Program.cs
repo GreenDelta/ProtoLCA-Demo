@@ -27,15 +27,13 @@ namespace DemoApp
 
             // this should find a matching flow in the reference data
             await flows.GetFlow(
-                FlowQuery.ForElementary()
-                .WithName("Carbon dioxide")
+                FlowQuery.ForElementary("Carbon dioxide")
                 .WithUnit("g")
                 .WithCategory("air/unspecified"));
 
             // this should create a new flow
             await flows.GetFlow(
-                FlowQuery.ForElementary()
-                .WithName("SARS-CoV-2 viruses")
+                FlowQuery.ForElementary("SARS-CoV-2 viruses")
                 .WithUnit("Item(s)")
                 .WithCategory("air/urban"));
 
