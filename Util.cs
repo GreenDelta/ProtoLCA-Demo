@@ -65,6 +65,11 @@ namespace DemoApp
             return new Guid(hash).ToString();
         }
 
+        public static string OrEmpty(this string s)
+        {
+            return s == null ? "" : s.Trim();
+        }
+
         public static void Log(string s)
         {
             Console.WriteLine(s);

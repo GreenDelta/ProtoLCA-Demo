@@ -53,26 +53,65 @@ namespace DemoApp
             return map;
         }
 
-        public async FlowMapEntry ElementaryFlow(FlowQuery query)
+        public async Task<FlowMapEntry> GetFlow(FlowQuery query)
         {
+            Log($"Handle a flow query: {query}");
 
             // first try to find a flow from the mapping
             var entry = query.FindEntryIn(flowMap);
             if (entry != null)
+            {
+                Log($"  Found mapping entry {query.FlowID}");
                 return entry;
+            }
 
-            // if there is no mapping for the flow, search if we
-            // can find a matching flow in the database
-            // first check if the unit is known
+            // check if the unit is known
             var unitEntry = units.EntryOf(query.Unit);
             if (unitEntry == null)
             {
-                Log($"ERROR: Unknown unit {query.Unit}; unmapped flow {query}");
+                Log($"  ERROR: Unknown unit {query.Unit} => no flow");
                 return null;
             }
 
-            // run the search for the flow name and try to find
-            // the best candidate
+            // search in the database for a matching flow or create a
+            // new one if no matching flow can be found
+            var flow = await Search(query);
+            if (flow != null)
+            {
+                Log($"  Found matching flow {flow.Name}:{flow.Id}");
+            }
+            else
+            {
+                flow = Build.FlowOf(
+                    query.Name,
+                    query.Type,
+                    unitEntry.FlowProperty);
+                Log($"  Created new flow");
+            }
+
+            // finally, update the mapping entry
+            // TODO: improve the mapping entry
+            var mapping = new FlowMapEntry
+            {
+                ConversionFactor = unitEntry.Factor,
+                From = query.ToFlowMapRef(),
+                To = new FlowMapRef
+                {
+                    Flow = Build.RefOf(flow.Id, flow.Name),
+                }
+            };
+            flowMap.Mappings.Add(mapping);
+            mappings.Put(flowMap);
+            Log($"  Updated flow mapping {flowMap.Name}");
+
+            // TODO: search for providers in case of
+            // technosphere flows
+
+            return mapping;
+        }
+
+        private async Task<Flow> Search(FlowQuery query)
+        {
             var search = data.Search(new SearchRequest
             {
                 Type = ModelType.Flow,
@@ -92,40 +131,11 @@ namespace DemoApp
                 candiate = next;
             }
 
-            // if we found a matching flow, we add it to the mapping
-            if (candiate != null)
-            {
-                Log($"Found matching flow {candiate.Id} for {query}");
-                var mapEntry = new FlowMapEntry
-                {
-                    ConversionFactor = unitEntry.Factor,
-                    From = query.ToFlowMapRef(),
-                    To = new FlowMapRef { Flow = candiate }
-                };
-                flowMap.Mappings.Add(mapEntry);
-                mappings.Put(flowMap);
-                Log($"Updated flow mapping {flowMap.Name}");
-
-                return Tuple.Create(candiate, unitEntry.Factor);
-            }
-
-            // finally, if we cannot find a corresponding flow,
-            // we create a new one, and add it to the flow mapping
-            var flow = Build.ElementaryFlowOf(query.Name, unitEntry.FlowProperty);
-            Log($"Created new flow for {query}");
-            var flowRef = Build.RefOf(flow.Id, flow.Name);
-            flowRef.FlowType = FlowType.ElementaryFlow;
-            var newEntry = new FlowMapEntry
-            {
-                ConversionFactor = unitEntry.Factor,
-                From = query.ToFlowMapRef(),
-                To = new FlowMapRef { Flow = flowRef }
-            };
-            flowMap.Mappings.Add(newEntry);
-            mappings.Put(flowMap);
-            Log($"Updated flow mapping {flowMap.Name}");
-
-            return Tuple.Create(flowRef, unitEntry.Factor);
+            // load the flow from the database
+            if (candiate == null)
+                return null;
+            var status = data.GetFlow(candiate);
+            return status.Ok ? status.Flow : null;
         }
 
         // Try to determine if the given candidate is a better match than
