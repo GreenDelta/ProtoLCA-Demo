@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-using Google.Protobuf;
 using Grpc.Core;
 using ProtoLCA;
 using ProtoLCA.Services;
@@ -15,7 +14,9 @@ namespace DemoApp
     {
         static void Main()
         {
-            var chan = new Channel("localhost:8080", ChannelCredentials.Insecure);
+            var chan = new Channel(
+                "localhost:8080",
+                ChannelCredentials.Insecure);
             Task.Run(() => CreateExampleProcess(chan)).Wait();
             // Task.Run(() => CreateExampleFlows(chan)).Wait();
             // Task.Run(() => PrintAllMappingFiles(chan)).Wait();
@@ -56,98 +57,99 @@ namespace DemoApp
             var flows = await FlowFetch.Create(chan, "ProtoLCA-Demo.csv");
             var client = new DataService.DataServiceClient(chan);
 
-            // get flow property mass
-            var status = client.GetFlowProperty(Build.RefOf(name: "Mass"));
-            if (!status.Ok)
-                throw new Exception(status.Error);
-            var mass = status.FlowProperty;
-
             // set the location
             var process = Build.ProcessOf("Iron Process - Gas cleaning");
             var location = GetLocation(client, "Global");
-            process.Location = Build.RefOf(id: location.Id, name: location.Name);
-
-            // add inputs
-            var inputs = new List<(string, FlowType, double)> {
-                ("Air Blast", FlowType.ProductFlow, 245.8751543969349),
-                ("Combustion Air", FlowType.WasteFlow, 59.764430236449158),
-                ("Hematite Pellets", FlowType.ProductFlow, 200),
-                ("Coke", FlowType.ProductFlow, 50),
-                ("Limestone", FlowType.ProductFlow, 30.422441963816247),
-                ("Steel Scrap", FlowType.WasteFlow, 1.8853256607049331),
-                ("Reductant", FlowType.ProductFlow, 16),
-                ("Washing Solution", FlowType.ProductFlow, 75),
-            };
-            foreach (var (name, type, amount) in inputs)
+            process.Location = new Ref
             {
-                var mapping = await flows.GetFlow(FlowQuery.For(type, name));
+                Id = location.Id,
+                Name = location.Name,
+            };
+
+            // add the exchanges
+            foreach (var e in GetExampleExchanges())
+            {
+                var (isInput, type, name, amount, unit) = e;
+
+                // find and map a flow
+                var flowQuery = FlowQuery.For(type, name).WithUnit(unit);
+                if (type == FlowType.ElementaryFlow)
+                {
+                    flowQuery.WithCategory("air/unspecified");
+                }
+                else
+                {
+                    flowQuery.WithLocation("FI");
+                }
+                var mapping = await flows.GetFlow(flowQuery);
                 if (mapping == null)
                     continue;
-                var e = ToExchange(amount, mapping);
+
+                // create and add the exchange
+                var exchange = ToExchange(isInput, amount, mapping);
                 process.LastInternalId += 1;
-                e.InternalId = process.LastInternalId;
-                e.Input = true;
-                process.Exchanges.Add(e);
+                exchange.InternalId = process.LastInternalId;
+                process.Exchanges.Add(exchange);
             }
 
-            // add outputs
-            var outputs = new List<(string, FlowType, double)>
-            {
-                ("Slag", FlowType.WasteFlow, 33.573534216580185),
-                ("Carbon dioxide", FlowType.ElementaryFlow, 140.44236409682583),
-                ("Water vapour", FlowType.ElementaryFlow, 30.591043638569072),
-                ("Sulfur dioxide", FlowType.ElementaryFlow, 0.01134867565288134),
-                ("Air", FlowType.ElementaryFlow, 158.58576460676247),
-                ("Pig Iron", FlowType.ProductFlow, 138.2370620852756),
-                ("Heat Loss", FlowType.WasteFlow, 32727.272727272728),
-                ("Coarse Dust", FlowType.ElementaryFlow, 1.4340290871696806),
-                ("Scrubber Sludge", FlowType.WasteFlow, 56.261517810249792),
-                ("Fine Dust", FlowType.ElementaryFlow, 0.18398927491951844),
-            };
-            foreach (var (name, type, amount) in outputs)
-            {
-                var mapping = await flows.GetFlow(FlowQuery.For(type, name));
-                if (mapping == null)
-                    continue;
-                var e = ToExchange(amount, mapping);
-                process.LastInternalId += 1;
-                e.InternalId = process.LastInternalId;
-                e.Input = false;
-                process.Exchanges.Add(e);
-            }
-
+            // insert the process
             var insertStatus = client.PutProcess(process);
             if (!insertStatus.Ok)
                 throw new Exception(insertStatus.Error);
         }
 
-        private static Exchange ToExchange(double amount, FlowMapEntry mapping)
+        private static Exchange ToExchange(
+            bool isInput, double amount, FlowMapEntry mapping)
         {
             var target = mapping.To;
             var e = new Exchange
             {
                 Amount = amount,
+                Input = isInput,
                 Flow = target.Flow,
                 FlowProperty = target.FlowProperty,
                 Unit = target.Unit,
             };
+
+            // set the provider for product inputs or waste outputs
+            if (((isInput && target.Flow.FlowType == FlowType.ProductFlow)
+                || (!isInput && target.Flow.FlowType == FlowType.WasteFlow))
+                && target.Provider.Id.IsNotEmpty())
+            {
+                e.DefaultProvider = target.Provider;
+            }
             return e;
         }
 
-        private static Flow GetFlow(
-            DataService.DataServiceClient client,
-            string name,
-            FlowType flowType,
-            FlowProperty quantity)
+        private static List<(bool, FlowType, string, double, string)> GetExampleExchanges()
         {
-            var status = client.GetFlow(Build.RefOf(name: name));
-            if (status.Ok)
-                return status.Flow;
-            var flow = Build.FlowOf(name, flowType, quantity);
-            var insertStatus = client.PutFlow(flow);
-            if (!insertStatus.Ok)
-                throw new Exception(insertStatus.Error);
-            return flow;
+            var p = FlowType.ProductFlow;
+            var w = FlowType.WasteFlow;
+            var e = FlowType.ElementaryFlow;
+            var i = true; // is input
+            var o = false; // is output
+
+            return new List<(bool, FlowType, string, double, string)> {
+                (i, p, "Air Blast", 245.8751543969349, "t"),
+                (i, w, "Combustion Air", 59.764430236449158, "t"),
+                (i, p, "Hematite Pellets", 200, "t"),
+                (i, p, "Coke", 50, "t"),
+                (i, p, "Limestone", 30.422441963816247, "t"),
+                (i, w, "Steel Scrap", 1.8853256607049331, "t"),
+                (i, p, "Reductant", 16, "t"),
+                (i, p, "Washing Solution", 75, "t"),
+
+                (o, w, "Slag", 33.573534216580185, "t"),
+                (o, e, "Carbon dioxide", 140.44236409682583, "t"),
+                (o, e, "Water vapour", 30.591043638569072, "t"),
+                (o, e, "Sulfur dioxide", 0.01134867565288134, "t"),
+                (o, e, "Air", 158.58576460676247, "t"),
+                (o, p, "Pig Iron", 138.2370620852756, "t"),
+                (o, w, "Heat Loss", 32727.272727272728, "kWh"),
+                (o, e, "Coarse Dust", 1.4340290871696806, "kg"),
+                (o, w, "Scrubber Sludge", 56.261517810249792, "kg"),
+                (o, e, "Fine Dust", 0.18398927491951844, "kg"),
+            };
         }
 
         private static Location GetLocation(

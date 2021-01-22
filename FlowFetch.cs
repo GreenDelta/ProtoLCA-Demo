@@ -86,6 +86,7 @@ namespace DemoApp
                     query.Name,
                     query.Type,
                     unitEntry.FlowProperty);
+                data.PutFlow(flow);
                 Log($"  Created new flow");
             }
             var flowRef = ToRef(flow);
@@ -230,21 +231,28 @@ namespace DemoApp
                 FlowType = flow.FlowType
             };
 
-            var category = flow.Category.CategoryPath;
-            if (category.Count != 0)
+            if (flow.Category != null)
             {
-                foreach (var c in category)
+                var category = flow.Category.CategoryPath;
+                if (category.Count != 0)
                 {
-                    r.CategoryPath.Add(c);
+                    foreach (var c in category)
+                    {
+                        r.CategoryPath.Add(c);
+                    }
                 }
             }
 
-            if (flow.Location.Name.IsNotEmpty())
+            if (flow.Location != null && flow.Location.Name.IsNotEmpty())
             {
                 r.Location = flow.Location.Name;
             }
 
-            // TODO: reference unit
+            var unit = units.ReferenceUnitOf(flow);
+            if (unit != null)
+            {
+                r.RefUnit = unit.Name;
+            }
             return r;
         }
 
