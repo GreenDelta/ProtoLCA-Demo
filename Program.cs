@@ -85,10 +85,26 @@ namespace DemoApp
                 if (mapping == null)
                     continue;
 
-                // create and add the exchange
-                var exchange = ToExchange(isInput, amount, mapping);
                 process.LastInternalId += 1;
-                exchange.InternalId = process.LastInternalId;
+                var target = mapping.To;
+                var exchange = new Exchange
+                {
+                    InternalId = process.LastInternalId,
+                    Amount = amount * mapping.ConversionFactor,
+                    Input = isInput,
+                    Flow = target.Flow,
+                    FlowProperty = target.FlowProperty,
+                    Unit = target.Unit,
+                };
+
+                // set the provider for product inputs or waste outputs
+                if (((isInput && type == FlowType.ProductFlow)
+                    || (!isInput && type == FlowType.WasteFlow))
+                    && target.Provider != null)
+                {
+                    exchange.DefaultProvider = target.Provider;
+                }
+
                 process.Exchanges.Add(exchange);
             }
 
@@ -98,30 +114,8 @@ namespace DemoApp
                 throw new Exception(insertStatus.Error);
         }
 
-        private static Exchange ToExchange(
-            bool isInput, double amount, FlowMapEntry mapping)
-        {
-            var target = mapping.To;
-            var e = new Exchange
-            {
-                Amount = amount,
-                Input = isInput,
-                Flow = target.Flow,
-                FlowProperty = target.FlowProperty,
-                Unit = target.Unit,
-            };
-
-            // set the provider for product inputs or waste outputs
-            if (((isInput && target.Flow.FlowType == FlowType.ProductFlow)
-                || (!isInput && target.Flow.FlowType == FlowType.WasteFlow))
-                && target.Provider.Id.IsNotEmpty())
-            {
-                e.DefaultProvider = target.Provider;
-            }
-            return e;
-        }
-
-        private static List<(bool, FlowType, string, double, string)> GetExampleExchanges()
+        private static List<(bool, FlowType, string, double, string)>
+            GetExampleExchanges()
         {
             var p = FlowType.ProductFlow;
             var w = FlowType.WasteFlow;

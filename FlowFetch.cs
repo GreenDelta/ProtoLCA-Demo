@@ -106,7 +106,7 @@ namespace DemoApp
                 From = query.ToFlowMapRef(),
                 To = new FlowMapRef
                 {
-                    Flow = Build.RefOf(flow.Id, flow.Name),
+                    Flow = flowRef,
                 }
             };
             if (provider != null)
