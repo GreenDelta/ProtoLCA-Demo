@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 using Grpc.Core;
@@ -15,17 +13,15 @@ namespace DemoApp
 {
     public class UnitIndex
     {
+        private readonly Dictionary<string, FlowProperty> flowProps;
+        private readonly Dictionary<string, UnitGroup> unitGroups;
         private readonly Index index;
-
-        private UnitIndex(Index index)
-        {
-            this.index = index;
-        }
 
         public static async Task<UnitIndex> Build(Channel chan)
         {
             var data = new DataService.DataServiceClient(chan);
 
+            // fetch the unit groups
             var groupStream = data.GetUnitGroups(new Empty())
                 .ResponseStream;
             var groups = new Dictionary<string, UnitGroup>();
@@ -35,71 +31,118 @@ namespace DemoApp
                 groups.Add(group.Id, group);
             }
 
+            // fetch the flow properties
             var propStream = data.GetFlowProperties(new Empty())
                 .ResponseStream;
-            var idx = new Index();
-
-            var unitErr = false;
+            var props = new Dictionary<string, FlowProperty>();
             while (await propStream.MoveNext())
             {
                 var prop = propStream.Current;
-                var group = groups[prop.UnitGroup.Id];
-                if (group == null
-                    || !prop.Id.Equals(group.DefaultFlowProperty.Id))
+                props.Add(prop.Id, prop);
+            }
+            return new UnitIndex(props, groups);
+        }
+
+        private UnitIndex(
+            Dictionary<string, FlowProperty> flowProps,
+            Dictionary<string, UnitGroup> unitGroups)
+        {
+            this.flowProps = flowProps;
+            this.unitGroups = unitGroups;
+
+            // build the reverse unit index that maps unit symbols to
+            // their corresponding unit and flow property objects
+            this.index = new Index();
+            var handled = new HashSet<string>();
+            Func<(string, Unit, FlowProperty), bool> add = tup =>
+            {
+                var (symbol, unit, prop) = tup;
+                if (handled.Contains(symbol))
+                {
+                    Log($"WARNING: Duplicate unit {symbol} in database.");
+                    return false;
+                }
+                index.Add(symbol, new UnitEntry(prop, unit));
+                handled.Add(symbol);
+                return false;
+            };
+
+            foreach (var group in unitGroups.Values)
+            {
+                if (!flowProps.TryGetValue(
+                    group.DefaultFlowProperty.Id, out FlowProperty prop))
                     continue;
                 foreach (var unit in group.Units)
                 {
-                    // TODO: also index synonyms
-                    if (idx.ContainsKey(unit.Name))
+                    add((unit.Name, unit, prop));
+                    foreach (var synonym in unit.Synonyms)
                     {
-                        if (!unitErr)
-                        {
-                            Log("WARNING: there are " +
-                                $"duplicate units in the database, e.g. {unit.Name}");
-                            unitErr = true;
-                        }
-                        continue;
+                        add((synonym, unit, prop));
                     }
-                    idx.Add(unit.Name, new UnitEntry(prop, unit));
                 }
             }
 
-            return new UnitIndex(idx);
         }
 
+        /// <summary>
+        /// Returns true when both units can be coverted into each other.
+        /// </summary>
         public bool AreConvertible(string unit1, string unit2)
         {
             if (string.IsNullOrWhiteSpace(unit1)
                 || string.IsNullOrWhiteSpace(unit2))
                 return false;
 
-            var e1 = index[unit1];
+
+            var e1 = EntryOf(unit1);
             if (e1 == null)
                 return false;
 
-            var e2 = index[unit2];
+            var e2 = EntryOf(unit2);
             if (e2 == null)
                 return false;
 
-            // checking by identity should be good here
-            return e1.FlowProperty == e2.FlowProperty;
+            return e1.FlowProperty.Id.Equals(e2.FlowProperty.Id);
         }
 
         public UnitEntry EntryOf(string unit)
         {
-            index.TryGetValue(unit, out UnitEntry e);
-            return e;
+            return index.TryGetValue(unit, out UnitEntry entry)
+                ? entry
+                : null;
         }
 
-        public FlowProperty PropertyOf(string unit)
+        public FlowProperty ReferenceQuantityOf(Flow flow)
         {
-            return index[unit]?.FlowProperty;
+            if (flow == null)
+                return null;
+            foreach (var f in flow.FlowProperties)
+            {
+                if (f.ReferenceFlowProperty)
+                {
+                    return flowProps.TryGetValue(
+                        f.FlowProperty.Id, out FlowProperty prop)
+                        ? prop
+                        : null;
+                }
+            }
+            return null;
         }
 
-        public double FactorOf(string unit)
+        public Unit ReferenceUnitOf(Flow flow)
         {
-            var e = index[unit];
-            return e == null ? 0 : e.Factor;
+            var refProp = ReferenceQuantityOf(flow);
+            if (refProp == null)
+                return null;
+            if (!unitGroups.TryGetValue(
+                refProp.UnitGroup.Id, out UnitGroup group))
+                return null;
+            foreach (var unit in group.Units)
+            {
+                if (unit.ReferenceUnit)
+                    return unit;
+            }
+            return null;
         }
     }
 
