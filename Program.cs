@@ -55,11 +55,11 @@ namespace DemoApp
         private static async void CreateExampleProcess(Channel chan)
         {
             var flows = await FlowFetch.Create(chan, "ProtoLCA-Demo.csv");
-            var client = new DataService.DataServiceClient(chan);
+            var data = new DataService.DataServiceClient(chan);
 
             // set the location
             var process = Build.ProcessOf("Iron Process - Gas cleaning");
-            var location = GetLocation(client, "Global");
+            var location = GetLocation(data, "Global");
             process.Location = new Ref
             {
                 Id = location.Id,
@@ -67,6 +67,7 @@ namespace DemoApp
             };
 
             // add the exchanges
+            Exchange qRef = null;
             foreach (var e in GetExampleExchanges())
             {
                 var (isInput, type, name, amount, unit) = e;
@@ -105,13 +106,71 @@ namespace DemoApp
                     exchange.DefaultProvider = target.Provider;
                 }
 
+                // set the quantitative reference
+                if (!isInput && type == FlowType.ProductFlow)
+                {
+                    exchange.QuantitativeReference = true;
+                    qRef = exchange;
+                }
+
                 process.Exchanges.Add(exchange);
             }
 
             // insert the process
-            var insertStatus = client.PutProcess(process);
+            var insertStatus = data.PutProcess(process);
             if (!insertStatus.Ok)
                 throw new Exception(insertStatus.Error);
+
+            // calculation
+
+            // select the first best LCIA method if it exsists
+            Ref method = null;
+            var methods = data.GetDescriptors(
+                new DescriptorRequest { Type = ModelType.ImpactMethod })
+                .ResponseStream;
+            if (await methods.MoveNext())
+            {
+                method = methods.Current;
+                Log($"Selected LCIA method: {method.Name}");
+            }
+
+            var setup = new CalculationSetup
+            {
+                Amount = qRef.Amount,
+                ProductSystem = new Ref { Id = process.Id },
+                ImpactMethod = method,
+                FlowProperty = qRef.FlowProperty,
+                Unit = qRef.Unit,
+            };
+
+            Log("Calculate results ...");
+            var results = new ResultService.ResultServiceClient(chan);
+            var resultStatus = results.Calculate(setup);
+            if (!resultStatus.Ok)
+            {
+                Log($"ERROR: Failed to calculate " +
+                    $"result: {resultStatus.Error}");
+                return;
+            }
+
+            var impacts = results.GetImpacts(resultStatus.Result)
+                .ResponseStream;
+            var hasImpacts = false;
+            while (await impacts.MoveNext())
+            {
+                var impact = impacts.Current;
+                Log($"{impact.ImpactCategory.Name}: {impact.Value}" +
+                    $" {impact.ImpactCategory.RefUnit}");
+                hasImpacts = true;
+            }
+
+            if (!hasImpacts)
+            {
+                // TODO: show inventory results
+
+            }
+
+            results.Dispose(resultStatus.Result);
         }
 
         private static List<(bool, FlowType, string, double, string)>
