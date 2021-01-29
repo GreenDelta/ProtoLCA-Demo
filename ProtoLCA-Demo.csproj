@@ -74,6 +74,7 @@
     <Compile Include="Factory.cs" />
     <Compile Include="FlowFetch.cs" />
     <Compile Include="FlowQuery.cs" />
+    <Compile Include="ProcessExample.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UnitIndex.cs" />
