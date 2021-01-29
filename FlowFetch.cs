@@ -35,14 +35,14 @@ namespace DemoApp
             return new FlowFetch(chan, flowMap, units);
         }
 
+        /// <summary>
+        /// Get the flow mapping with the given name from the server or create a
+        /// new one if it does not exist.
+        /// </summary>
         private static FlowMap GetFlowMap(string name, Channel chan)
         {
             var service = new FlowMapService(chan);
-            var status = service.Get(new FlowMapInfo
-            {
-                Name = name
-            });
-
+            var status = service.Get(new FlowMapInfo { Name = name });
             if (status.Ok)
                 return status.FlowMap;
             var map = new FlowMap

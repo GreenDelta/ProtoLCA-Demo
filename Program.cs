@@ -17,7 +17,8 @@ namespace DemoApp
             var chan = new Channel(
                 "localhost:8080",
                 ChannelCredentials.Insecure);
-            Task.Run(() => CreateExampleProcess(chan)).Wait();
+            Task.Run(() => UnitMappingExample(chan)).Wait();
+            // Task.Run(() => CreateExampleProcess(chan)).Wait();
             // Task.Run(() => CreateExampleFlows(chan)).Wait();
             // Task.Run(() => PrintAllMappingFiles(chan)).Wait();
             Console.ReadKey();
@@ -38,7 +39,20 @@ namespace DemoApp
                 FlowQuery.ForElementary("SARS-CoV-2 viruses")
                 .WithUnit("Item(s)")
                 .WithCategory("air/urban"));
+        }
 
+        /// <summary>
+        /// Shows how to map a unit name to the corresponding unit,
+        /// unit group, and flow property objects in openLCA.
+        /// </summary>
+        private static async void UnitMappingExample(Channel chan)
+        {
+            var index = await UnitIndex.Build(chan);
+            var tons = index.EntryOf("t");
+            Log($"unit: {tons.Unit.Name}");
+            Log($"unit group: {tons.UnitGroup.Name}");
+            Log($"flow property (quantity): {tons.FlowProperty.Name}");
+            Log($"conversion factor: {tons.Factor}");
         }
 
         private static async void PrintAllMappingFiles(Channel chan)

@@ -11,12 +11,25 @@ using static DemoApp.Util;
 
 namespace DemoApp
 {
+    /// <summary>
+    /// We index units and their corresponding groups and flow properties by the
+    /// respective unit names. In openLCA convertible units are organized in
+    /// unit groups and amounts of flows are given in a quantity (flow property
+    /// in openLCA) and unit. Multiple flow properties can link to the same
+    /// unit group in openLCA. In order to select a flow property for a unit,
+    /// a unit group can have a link to a default flow property. This index
+    /// builds a mapping from a unit name to its corresponding default flow
+    /// property.
+    /// </summary>
     public class UnitIndex
     {
         private readonly Dictionary<string, FlowProperty> flowProps;
         private readonly Dictionary<string, UnitGroup> unitGroups;
         private readonly Index index;
 
+        /// <summary>
+        /// Builds a new unit index.
+        /// </summary>
         public static async Task<UnitIndex> Build(Channel chan)
         {
             var data = new DataService.DataServiceClient(chan);
@@ -51,18 +64,18 @@ namespace DemoApp
             this.unitGroups = unitGroups;
 
             // build the reverse unit index that maps unit symbols to
-            // their corresponding unit and flow property objects
+            // their corresponding unit, group, and flow property objects
             this.index = new Index();
             var handled = new HashSet<string>();
-            Func<(string, Unit, FlowProperty), bool> add = tup =>
+            Func<(string, Unit, UnitGroup, FlowProperty), bool> add = tup =>
             {
-                var (symbol, unit, prop) = tup;
+                var (symbol, unit, group, prop) = tup;
                 if (handled.Contains(symbol))
                 {
                     Log($"WARNING: Duplicate unit {symbol} in database.");
                     return false;
                 }
-                index.Add(symbol, new UnitEntry(prop, unit));
+                index.Add(symbol, new UnitEntry(prop, group, unit));
                 handled.Add(symbol);
                 return false;
             };
@@ -74,10 +87,10 @@ namespace DemoApp
                     continue;
                 foreach (var unit in group.Units)
                 {
-                    add((unit.Name, unit, prop));
+                    add((unit.Name, unit, group, prop));
                     foreach (var synonym in unit.Synonyms)
                     {
-                        add((synonym, unit, prop));
+                        add((synonym, unit, group, prop));
                     }
                 }
             }
@@ -86,6 +99,7 @@ namespace DemoApp
 
         /// <summary>
         /// Returns true when both units can be coverted into each other.
+        /// This is true when the units belong to the same unit group.
         /// </summary>
         public bool AreConvertible(string unit1, string unit2)
         {
@@ -95,14 +109,14 @@ namespace DemoApp
 
 
             var e1 = EntryOf(unit1);
-            if (e1 == null)
+            if (e1 == null || e1.UnitGroup == null)
                 return false;
 
             var e2 = EntryOf(unit2);
-            if (e2 == null)
+            if (e2 == null || e2.UnitGroup == null)
                 return false;
 
-            return e1.FlowProperty.Id.Equals(e2.FlowProperty.Id);
+            return String.Equals(e1.UnitGroup.Id, e2.UnitGroup.Id);
         }
 
         public UnitEntry EntryOf(string unit)
@@ -112,6 +126,12 @@ namespace DemoApp
                 : null;
         }
 
+        /// <summary>
+        /// Returns the reference quantity (flow property) of the
+        /// given flow. Results of that flow are always given in
+        /// that quantity. Also, this is the quantity that should
+        /// be used for the flow mappings.
+        /// </summary>
         public FlowProperty ReferenceQuantityOf(Flow flow)
         {
             if (flow == null)
@@ -129,6 +149,11 @@ namespace DemoApp
             return null;
         }
 
+        /// <summary>
+        /// Returns the reference unit of the given flow. Results
+        /// of that flow are always given in that unit. Also, this
+        /// is the unit that should be used for the flow mappings.
+        /// </summary>
         public Unit ReferenceUnitOf(Flow flow)
         {
             var refProp = ReferenceQuantityOf(flow);
@@ -149,15 +174,21 @@ namespace DemoApp
     public class UnitEntry
     {
         public readonly FlowProperty FlowProperty;
+        public readonly UnitGroup UnitGroup;
         public readonly Unit Unit;
+
         public double Factor
         {
             get { return Unit.ConversionFactor; }
         }
 
-        internal UnitEntry(FlowProperty prop, Unit unit)
+        internal UnitEntry(
+            FlowProperty prop,
+            UnitGroup group,
+            Unit unit)
         {
             this.FlowProperty = prop;
+            this.UnitGroup = group;
             this.Unit = unit;
         }
     }
