@@ -13,6 +13,9 @@ using static DemoApp.Util;
 namespace DemoApp
 {
 
+    /// <summary>
+    /// Demonstrates the mapping, search, and creation of flows.
+    /// </summary>
     class FlowFetch
     {
         private readonly FlowMap flowMap;
@@ -53,7 +56,15 @@ namespace DemoApp
             return map;
         }
 
-        public async Task<FlowMapEntry> GetFlow(FlowQuery query)
+        /// <summary>
+        /// Get a mapping entry for the qiven query. First it checks
+        /// the mapping file in openLCA for a matching entry. If this
+        /// does not exist, it searches for a matching existing flow
+        /// and creates it if no matching flow can be found. Finally,
+        /// it updates the mapping and returns he corresponding flow
+        /// mapping.
+        /// </summary>
+        public async Task<FlowMapEntry> Get(FlowQuery query)
         {
             Log($"Handle a flow query: {query}");
 
@@ -99,7 +110,6 @@ namespace DemoApp
             }
 
             // finally, update the mapping entry
-            // TODO: improve the mapping entry
             var mapping = new FlowMapEntry
             {
                 ConversionFactor = unitEntry.Factor,
@@ -216,6 +226,30 @@ namespace DemoApp
             }
 
             return false;
+        }
+
+        private FlowMapRef ToMapRef(Flow flow)
+        {
+            var flowRef = ToRef(flow);
+
+            // flow property
+            var prop = units.ReferenceQuantityOf(flow);
+            var propRef = prop != null
+                ? new Ref { Id = prop.Id, Name = prop.Name }
+                : null;
+
+            // unit
+            var unit = units.ReferenceUnitOf(flow);
+            var unitRef = unit != null
+                ? new Ref { Id = unit.Id, Name = unit.Name }
+                : null;
+
+            return new FlowMapRef
+            {
+                Flow = flowRef,
+                FlowProperty = propRef,
+                Unit = unitRef,
+            };
         }
 
         private Ref ToRef(Flow flow)
