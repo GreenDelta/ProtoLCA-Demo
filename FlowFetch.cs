@@ -114,10 +114,7 @@ namespace DemoApp
             {
                 ConversionFactor = unitEntry.Factor,
                 From = query.ToFlowMapRef(),
-                To = new FlowMapRef
-                {
-                    Flow = flowRef,
-                }
+                To = ToMapRef(flow),
             };
             if (provider != null)
             {

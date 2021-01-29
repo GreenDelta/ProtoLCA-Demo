@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Grpc.Core;
-using ProtoLCA;
 using ProtoLCA.Services;
 
 using static DemoApp.Util;
