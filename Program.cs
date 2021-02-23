@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Grpc.Core;
@@ -85,6 +86,19 @@ namespace DemoApp
                 var name = mappings.Current.Name;
                 Log($"Found mapping: {name}");
             }
+        }
+
+        private static async void CategoryTreeExample(Channel chan)
+        {
+            var data = new DataService.DataServiceClient(chan);
+            var tree = await CategoryTree.Build(data);
+            var roots = tree.RootsOf(ProtoLCA.ModelType.Flow);
+
+            Action<(int, List<CategoryNode>)> print = pair =>
+            {
+                var (depth, nodes) = pair;
+            };
+
         }
     }
 }

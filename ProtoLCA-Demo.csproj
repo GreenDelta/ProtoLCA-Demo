@@ -71,6 +71,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CategoryTree.cs" />
     <Compile Include="Factory.cs" />
     <Compile Include="FlowFetch.cs" />
     <Compile Include="FlowQuery.cs" />
