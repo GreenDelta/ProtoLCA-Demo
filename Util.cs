@@ -103,5 +103,15 @@ namespace DemoApp
             Console.WriteLine(s);
         }
 
+        public static string Repeat(this string s, int n)
+        {
+            var builder = new StringBuilder();
+            for (int i = 0; i < n; i++)
+            {
+                builder.Append(s);
+            }
+            return builder.ToString();
+        }
+
     }
 }

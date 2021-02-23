@@ -18,8 +18,9 @@ namespace DemoApp
                 ChannelCredentials.Insecure);
             // Task.Run(() => UnitMappingExample(chan)).Wait();
             // Task.Run(() => FlowMappingExample(chan)).Wait();
-            Task.Run(() => ProcessExample.Run(chan)).Wait();
+            // Task.Run(() => ProcessExample.Run(chan)).Wait();
             // Task.Run(() => PrintAllMappingFiles(chan)).Wait();
+            Task.Run(() => CategoryTreeExample(chan)).Wait();
             Console.ReadKey();
         }
 
@@ -94,11 +95,21 @@ namespace DemoApp
             var tree = await CategoryTree.Build(data);
             var roots = tree.RootsOf(ProtoLCA.ModelType.Flow);
 
-            Action<(int, List<CategoryNode>)> print = pair =>
+            void print((int, List<CategoryNode>) pair)
             {
                 var (depth, nodes) = pair;
-            };
+                var offset = " ".Repeat(depth * 2);
+                foreach (var node in nodes)
+                {
+                    var line = string.Format("{0}+{1}", offset, node.Name);
+                    Console.WriteLine(line);
+                    print((depth + 1, node.Childs));
+                }
+            }
 
+            print((0, roots));
         }
+
+
     }
 }
