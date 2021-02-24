@@ -21,7 +21,8 @@ namespace DemoApp
             // Task.Run(() => FlowMappingExample(chan)).Wait();
             // Task.Run(() => ProcessExample.Run(chan)).Wait();
             // Task.Run(() => PrintAllMappingFiles(chan)).Wait();
-            Task.Run(() => CategoryTreeExample(chan)).Wait();
+            // Task.Run(() => CategoryTreeExample(chan)).Wait();
+            Task.Run(() => PrintImpacts(chan)).Wait();
             Console.ReadKey();
         }
 
@@ -88,6 +89,23 @@ namespace DemoApp
                 var name = mappings.Current.Name;
                 Log($"Found mapping: {name}");
             }
+        }
+
+        private static async void PrintImpacts(Channel chan)
+        {
+            var data = new DataService.DataServiceClient(chan);
+            var methods = data.GetImpactMethods(new Empty()).ResponseStream;
+            while (await methods.MoveNext())
+            {
+                var method = methods.Current;
+                Console.WriteLine("+ " + method.Name);
+                foreach (var impact in method.ImpactCategories)
+                {
+                    Console.WriteLine(string.Format("  - {0} [{1}]",
+                        impact.Name, impact.RefUnit));
+                }
+            }
+
         }
 
         /// <summary>
