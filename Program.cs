@@ -22,7 +22,8 @@ namespace DemoApp
             // Task.Run(() => ProcessExample.Run(chan)).Wait();
             // Task.Run(() => PrintAllMappingFiles(chan)).Wait();
             // Task.Run(() => CategoryTreeExample(chan)).Wait();
-            Task.Run(() => PrintImpacts(chan)).Wait();
+            // Task.Run(() => PrintImpacts(chan)).Wait();
+            Task.Run(() => ProviderExample(chan)).Wait();
             Console.ReadKey();
         }
 
@@ -106,6 +107,25 @@ namespace DemoApp
                 }
             }
 
+        }
+
+        private static async void ProviderExample(Channel chan)
+        {
+            var data = new DataService.DataServiceClient(chan);
+            var flowRef = new Ref
+            {
+                Id = "08c64e0a-dbf8-47a7-86dc-c281f357e9cd",
+                Type = "Flow",
+            };
+            var providers = data.GetProvidersFor(flowRef).ResponseStream;
+            while (await providers.MoveNext())
+            {
+                var provider = providers.Current;
+                var label = provider.Location == null
+                    ? provider.Name
+                    : provider.Name + " - " + provider.Location;
+                Console.WriteLine(label);
+            }
         }
 
         /// <summary>
