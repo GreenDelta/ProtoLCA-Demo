@@ -24,7 +24,8 @@ namespace DemoApp
             // Task.Run(() => PrintAllMappingFiles(chan)).Wait();
             // Task.Run(() => CategoryTreeExample(chan)).Wait();
             // Task.Run(() => PrintImpacts(chan)).Wait();
-            Task.Run(() => ProviderExample(chan)).Wait();
+            // Task.Run(() => ProviderExample(chan)).Wait();
+            Task.Run(() => ProductProviderExample.Run(chan)).Wait();
             Console.ReadKey();
         }
 
@@ -112,25 +113,6 @@ namespace DemoApp
                         impact.Name, impact.RefUnit));
                 }
 
-            }
-        }
-
-        private static async void ProviderExample(Channel chan)
-        {
-            var data = new DataFetchService.DataFetchServiceClient(chan);
-            var flowRef = new Ref
-            {
-                EntityType = EntityType.Flow,
-                Id = "08c64e0a-dbf8-47a7-86dc-c281f357e9cd",
-            };
-            var providers = data.GetProvidersFor(flowRef).ResponseStream;
-            while (await providers.MoveNext())
-            {
-                var provider = providers.Current;
-                var label = provider.Location == null
-                    ? provider.Name
-                    : provider.Name + " - " + provider.Location;
-                Console.WriteLine(label);
             }
         }
 
