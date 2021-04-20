@@ -4,7 +4,8 @@ using System.Threading.Tasks;
 
 using Grpc.Core;
 using ProtoLCA;
-using DataService = ProtoLCA.Services.DataFetchService.DataFetchServiceClient;
+using ProtoLCA.Services;
+using DataFetchService = ProtoLCA.Services.DataFetchService.DataFetchServiceClient;
 
 namespace DemoApp
 {
@@ -95,14 +96,19 @@ namespace DemoApp
         /// Construct a new category tree from all categories that can be retrieved
         /// from the given data service.
         /// </summary>
-        public static async Task<CategoryTree> Build(DataService data)
+        public static async Task<CategoryTree> Build(DataFetchService data)
         {
             var nodes = new Dictionary<string, CategoryNode>();
-            var categories = data.GetC(new Empty()).ResponseStream;
-            while (await categories.MoveNext())
+            var all = data.GetAll(new GetAllRequest
             {
-                var next = categories.Current;
-                nodes.Add(next.Id, new CategoryNode(next));
+                ModelType = ModelType.Category
+            });
+            foreach (var ds in all.DataSet)
+            {
+                if (ds.Category != null)
+                {
+                    nodes.Add(ds.Category.Id, new CategoryNode(ds.Category));
+                }
             }
 
             var tree = new CategoryTree();

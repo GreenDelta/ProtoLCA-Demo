@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Threading.Tasks;
 
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using ProtoLCA;
 using ProtoLCA.Services;
 
 using FlowMapService = ProtoLCA.Services.FlowMapService.FlowMapServiceClient;
-using DataService = ProtoLCA.Services.DataService.DataServiceClient;
+using DataFetchService = ProtoLCA.Services.DataFetchService.DataFetchServiceClient;
+using DataUpdateService = ProtoLCA.Services.DataUpdateService.DataUpdateServiceClient;
 
 using static DemoApp.Util;
 
@@ -19,13 +21,15 @@ namespace DemoApp
     class FlowFetch
     {
         private readonly FlowMap flowMap;
-        private readonly DataService data;
+        private readonly DataFetchService dataFetch;
+        private readonly DataUpdateService dataUpdate;
         private readonly FlowMapService mappings;
         private readonly UnitIndex units;
 
         private FlowFetch(Channel chan, FlowMap flowMap, UnitIndex units)
         {
-            data = new DataService(chan);
+            dataFetch = new DataFetchService(chan);
+            dataUpdate = new DataUpdateService(chan);
             mappings = new FlowMapService(chan);
             this.flowMap = flowMap;
             this.units = units;
@@ -33,7 +37,7 @@ namespace DemoApp
 
         async public static Task<FlowFetch> Create(Channel chan, string mapping)
         {
-            var flowMap = GetFlowMap(mapping, chan);
+            var flowMap = await GetFlowMap(mapping, chan);
             var units = await UnitIndex.Build(chan);
             return new FlowFetch(chan, flowMap, units);
         }
@@ -42,12 +46,21 @@ namespace DemoApp
         /// Get the flow mapping with the given name from the server or create a
         /// new one if it does not exist.
         /// </summary>
-        private static FlowMap GetFlowMap(string name, Channel chan)
+        private static async Task<FlowMap> GetFlowMap(string name, Channel chan)
         {
             var service = new FlowMapService(chan);
-            var status = service.Get(new FlowMapInfo { Name = name });
-            if (status.Ok)
-                return status.FlowMap;
+
+            // check if the flow map exists and load it if this is the case
+            var infos = service.GetAll(new Empty()).ResponseStream;
+            while (await infos.MoveNext())
+            {
+                var info = infos.Current;
+                if (name.EqualsIgnoreCase(info.Name))
+                {
+                    return service.Get(info);
+                }
+            }
+
             var map = new FlowMap
             {
                 Name = name,
@@ -97,7 +110,7 @@ namespace DemoApp
                     query.Name,
                     query.Type,
                     unitEntry.FlowProperty);
-                data.PutFlow(flow);
+                dataUpdate.Put(new DataSet { Flow = flow });
                 Log($"  Created new flow");
             }
             var flowRef = ToRef(flow);
@@ -130,9 +143,9 @@ namespace DemoApp
 
         private async Task<Flow> FlowSearch(FlowQuery query)
         {
-            var search = data.Search(new SearchRequest
+            var search = dataFetch.Search(new SearchRequest
             {
-                Type = ModelType.Flow,
+                ModelType = ModelType.Flow,
                 Query = query.Name,
             }).ResponseStream;
             Ref candiate = null;
@@ -152,13 +165,17 @@ namespace DemoApp
             // load the flow from the database
             if (candiate == null)
                 return null;
-            var status = data.GetFlow(candiate);
-            return status.Ok ? status.Flow : null;
+            var dataSet = dataFetch.Get(new GetRequest
+            {
+                ModelType = ModelType.Flow,
+                Id = candiate.Id
+            });
+            return dataSet.Flow;
         }
 
         private async Task<Ref> ProviderSearch(Ref flow, FlowQuery query)
         {
-            var search = data.GetProvidersFor(flow).ResponseStream;
+            var search = dataFetch.GetProvidersFor(flow).ResponseStream;
             Ref provider = null;
             Func<Ref, bool> matchesLocation = candidate =>
             {
@@ -253,6 +270,7 @@ namespace DemoApp
         {
             var r = new Ref
             {
+                EntityType = EntityType.Flow,
                 Id = flow.Id,
                 Name = flow.Name,
                 Description = flow.Description,

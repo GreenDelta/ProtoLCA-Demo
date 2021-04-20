@@ -142,10 +142,11 @@ namespace DemoApp
         /// </summary>
         private static async void CategoryTreeExample(Channel chan)
         {
-            var data = new DataService.DataServiceClient(chan);
+            var data = new DataFetchService.DataFetchServiceClient(chan);
             var tree = await CategoryTree.Build(data);
             var roots = tree.RootsOf(ModelType.Flow);
 
+            /*
             // a function that returns the first five items of a
             // category in the tree
             async Task<List<Ref>> descriptorsOf(CategoryNode node)
@@ -186,6 +187,7 @@ namespace DemoApp
             }
 
             await print((0, roots));
+            */
         }
     }
 }

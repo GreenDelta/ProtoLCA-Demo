@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 using Grpc.Core;
 using ProtoLCA;
@@ -14,16 +14,12 @@ namespace DemoApp
         internal static async void Run(Channel chan)
         {
             var flows = await FlowFetch.Create(chan, "ProtoLCA-Demo.csv");
-            var data = new DataService.DataServiceClient(chan);
+            var fetch = new DataFetchService.DataFetchServiceClient(chan);
+            var update = new DataUpdateService.DataUpdateServiceClient(chan);
 
             // set the location
             var process = Build.ProcessOf("Iron Process - Gas cleaning");
-            var location = GetLocation(data, "Global");
-            process.Location = new Ref
-            {
-                Id = location.Id,
-                Name = location.Name,
-            };
+            process.Location = await GetLocation(chan, "Global");
 
             // add the exchanges
             Exchange qRef = null;
@@ -77,16 +73,14 @@ namespace DemoApp
             }
 
             // insert the process
-            var insertStatus = data.PutProcess(process);
-            if (!insertStatus.Ok)
-                throw new Exception(insertStatus.Error);
+            var processRef = update.Put(new DataSet { Process = process });
 
             // calculation
 
             // select the first best LCIA method if it exsists
             Ref method = null;
-            var methods = data.GetDescriptors(
-                new DescriptorRequest { Type = ModelType.ImpactMethod })
+            var methods = fetch.GetDescriptors(
+                new GetDescriptorsRequest { ModelType = ModelType.ImpactMethod })
                 .ResponseStream;
             if (await methods.MoveNext())
             {
@@ -97,7 +91,7 @@ namespace DemoApp
             var setup = new CalculationSetup
             {
                 Amount = qRef.Amount,
-                ProductSystem = new Ref { Id = process.Id },
+                ProductSystem = processRef,
                 ImpactMethod = method,
                 FlowProperty = qRef.FlowProperty,
                 Unit = qRef.Unit,
@@ -105,15 +99,9 @@ namespace DemoApp
 
             Log("Calculate results ...");
             var results = new ResultService.ResultServiceClient(chan);
-            var resultStatus = results.Calculate(setup);
-            if (!resultStatus.Ok)
-            {
-                Log($"ERROR: Failed to calculate " +
-                    $"result: {resultStatus.Error}");
-                return;
-            }
+            var result = results.Calculate(setup);
 
-            var impacts = results.GetImpacts(resultStatus.Result)
+            var impacts = results.GetImpacts(result)
                 .ResponseStream;
             var hasImpacts = false;
             while (await impacts.MoveNext())
@@ -130,7 +118,7 @@ namespace DemoApp
 
             }
 
-            results.Dispose(resultStatus.Result);
+            results.Dispose(result);
         }
 
         private static List<(bool, FlowType, string, double, string)>
@@ -165,18 +153,27 @@ namespace DemoApp
             };
         }
 
-        private static Location GetLocation(
-            DataService.DataServiceClient client,
-            string name)
+        private static async Task<Ref> GetLocation(Channel chan, string name)
         {
-            var status = client.GetLocation(Build.RefOf(name: name));
-            if (status.Ok)
-                return status.Location;
+            // first try to get the location by name
+            var fetch = new DataFetchService.DataFetchServiceClient(chan);
+            var descriptors = fetch.GetDescriptors(new GetDescriptorsRequest
+            {
+                ModelType = ModelType.Location,
+                Attributes = new GetDescriptorsRequest.Types.Attributes
+                {
+                    Name = name
+                }
+            }).ResponseStream;
+            if (await descriptors.MoveNext())
+            {
+                return descriptors.Current;
+            }
+
+            // create a new location and insert it
+            var update = new DataUpdateService.DataUpdateServiceClient(chan);
             var location = Build.LocationOf(name);
-            var insertStatus = client.PutLocation(location);
-            if (!insertStatus.Ok)
-                throw new Exception(insertStatus.Error);
-            return location;
+            return update.Put(new DataSet { Location = location });
         }
     }
 }
