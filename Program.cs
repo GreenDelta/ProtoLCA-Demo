@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Grpc.Core;
+using Google.Protobuf.WellKnownTypes;
 using ProtoLCA;
 using ProtoLCA.Services;
 
@@ -94,28 +95,33 @@ namespace DemoApp
 
         private static async void PrintImpacts(Channel chan)
         {
-            var data = new DataService.DataServiceClient(chan);
-            var methods = data.GetImpactMethods(new Empty()).ResponseStream;
-            while (await methods.MoveNext())
+            var client = new DataFetchService.DataFetchServiceClient(chan);
+            var request = new GetAllRequest
             {
-                var method = methods.Current;
+                ModelType = ModelType.ImpactCategory,
+                PageSize = 100,
+            };
+            var response = client.GetAll(request);
+            foreach (var ds in response.DataSet)
+            {
+                var method = ds.ImpactMethod;
                 Console.WriteLine("+ " + method.Name);
                 foreach (var impact in method.ImpactCategories)
                 {
                     Console.WriteLine(string.Format("  - {0} [{1}]",
                         impact.Name, impact.RefUnit));
                 }
-            }
 
+            }
         }
 
         private static async void ProviderExample(Channel chan)
         {
-            var data = new DataService.DataServiceClient(chan);
+            var data = new DataFetchService.DataFetchServiceClient(chan);
             var flowRef = new Ref
             {
+                EntityType = EntityType.Flow,
                 Id = "08c64e0a-dbf8-47a7-86dc-c281f357e9cd",
-                Type = "Flow",
             };
             var providers = data.GetProvidersFor(flowRef).ResponseStream;
             while (await providers.MoveNext())

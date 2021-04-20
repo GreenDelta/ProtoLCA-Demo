@@ -4,8 +4,7 @@ using System.Threading.Tasks;
 
 using Grpc.Core;
 using ProtoLCA;
-using ProtoLCA.Services;
-using DataService = ProtoLCA.Services.DataService.DataServiceClient;
+using DataService = ProtoLCA.Services.DataFetchService.DataFetchServiceClient;
 
 namespace DemoApp
 {
@@ -99,7 +98,7 @@ namespace DemoApp
         public static async Task<CategoryTree> Build(DataService data)
         {
             var nodes = new Dictionary<string, CategoryNode>();
-            var categories = data.GetCategories(new Empty()).ResponseStream;
+            var categories = data.GetC(new Empty()).ResponseStream;
             while (await categories.MoveNext())
             {
                 var next = categories.Current;

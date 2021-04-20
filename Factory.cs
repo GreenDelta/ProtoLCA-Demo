@@ -7,10 +7,11 @@ namespace DemoApp
     {
         private Build() { }
 
-        public static Ref RefOf(string id = "", string name = "")
+        public static Ref RefOf(EntityType type, string id = "", string name = "")
         {
             return new Ref
             {
+                EntityType = type,
                 Id = id,
                 Name = name
             };
@@ -21,7 +22,6 @@ namespace DemoApp
             var unit = new Unit
             {
                 Id = Guid.NewGuid().ToString(),
-                Type = "Unit",
                 Name = name,
                 ConversionFactor = conversionFactor,
             };
@@ -30,7 +30,7 @@ namespace DemoApp
 
         public static UnitGroup UnitGroupOf(string name = "", Unit unit = null)
         {
-            var group = new UnitGroup();
+            var group = new UnitGroup { EntityType = EntityType.UnitGroup };
             SetBaseAttributes(group, name);
             if (unit != null)
             {
@@ -42,7 +42,7 @@ namespace DemoApp
 
         public static FlowProperty FlowPropertyOf(string name = "", UnitGroup unitGroup = null)
         {
-            var property = new FlowProperty();
+            var property = new FlowProperty { EntityType = EntityType.FlowProperty };
             SetBaseAttributes(property, name);
             if (unitGroup != null)
             {
@@ -60,7 +60,7 @@ namespace DemoApp
             FlowType flowType = FlowType.UndefinedFlowType,
             FlowProperty property = null)
         {
-            var flow = new Flow();
+            var flow = new Flow { EntityType = EntityType.Flow };
             SetBaseAttributes(flow, name);
             flow.FlowType = flowType;
             if (property != null)
@@ -126,7 +126,7 @@ namespace DemoApp
 
         public static Process ProcessOf(string name = "")
         {
-            var process = new Process();
+            var process = new Process { EntityType = EntityType.Process };
             SetBaseAttributes(process, name);
             process.ProcessType = ProcessType.UnitProcess;
             return process;
@@ -134,7 +134,7 @@ namespace DemoApp
 
         public static Location LocationOf(string name = "", String code = null)
         {
-            var location = new Location();
+            var location = new Location { EntityType = EntityType.Location };
             SetBaseAttributes(location, name);
             location.Code = code ?? name;
             return location;
@@ -144,7 +144,6 @@ namespace DemoApp
         {
             entity.Id = Guid.NewGuid().ToString();
             entity.Name = name;
-            entity.Type = entity.GetType().Name;
             entity.Version = "00.00.000";
             entity.LastChange = DateTime.UtcNow.ToString(
                 "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");

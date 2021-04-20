@@ -32,26 +32,36 @@ namespace DemoApp
         /// </summary>
         public static async Task<UnitIndex> Build(Channel chan)
         {
-            var data = new DataService.DataServiceClient(chan);
+            var data = new DataFetchService.DataFetchServiceClient(chan);
 
             // fetch the unit groups
-            var groupStream = data.GetUnitGroups(new Empty())
-                .ResponseStream;
-            var groups = new Dictionary<string, UnitGroup>();
-            while (await groupStream.MoveNext())
+            var groupResponse = data.GetAll(new GetAllRequest
             {
-                var group = groupStream.Current;
-                groups.Add(group.Id, group);
+                ModelType = ModelType.UnitGroup,
+                PageSize = -1, // no paging
+            });
+            var groups = new Dictionary<string, UnitGroup>();
+            foreach (var ds in groupResponse.DataSet)
+            {
+                if (ds.UnitGroup != null)
+                {
+                    groups.Add(ds.UnitGroup.Id, ds.UnitGroup);
+                }
             }
 
             // fetch the flow properties
-            var propStream = data.GetFlowProperties(new Empty())
-                .ResponseStream;
-            var props = new Dictionary<string, FlowProperty>();
-            while (await propStream.MoveNext())
+            var propResponse = data.GetAll(new GetAllRequest
             {
-                var prop = propStream.Current;
-                props.Add(prop.Id, prop);
+                ModelType = ModelType.FlowProperty,
+                PageSize = -1,
+            });
+            var props = new Dictionary<string, FlowProperty>();
+            foreach (var ds in propResponse.DataSet)
+            {
+                if (ds.FlowProperty != null)
+                {
+                    props.Add(ds.FlowProperty.Id, ds.FlowProperty);
+                }
             }
             return new UnitIndex(props, groups);
         }
