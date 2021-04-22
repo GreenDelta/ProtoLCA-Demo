@@ -13,6 +13,8 @@ namespace DemoApp
             Log("Get the total LCIA results of a process");
 
             var result = await Examples.CalculateFirstProcessResult(channel);
+            if (result == null)
+                return;
 
             // get and print the LCIA results
             var results = new ResultService.ResultServiceClient(channel);
