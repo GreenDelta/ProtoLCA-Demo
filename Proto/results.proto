@@ -28,7 +28,7 @@ service ResultService {
   rpc GetInventory(Result) returns (stream FlowResult);
 
   // Get the total impact assessment result of the given result.
-  rpc GetImpacts(Result) returns (stream ImpactResult);
+  rpc GetTotalImpacts(Result) returns (stream ImpactResult);
 
   // Get the used impact factors of a result. The request can be for:
   //

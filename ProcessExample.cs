@@ -101,7 +101,7 @@ namespace DemoApp
             var results = new ResultService.ResultServiceClient(chan);
             var result = results.Calculate(setup);
 
-            var impacts = results.GetImpacts(result)
+            var impacts = results.GetTotalImpacts(result)
                 .ResponseStream;
             var hasImpacts = false;
             while (await impacts.MoveNext())

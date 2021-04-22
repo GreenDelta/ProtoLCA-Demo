@@ -25,7 +25,9 @@ namespace DemoApp
             // Task.Run(() => CategoryTreeExample(chan)).Wait();
             // Task.Run(() => PrintImpacts(chan)).Wait();
             // Task.Run(() => ProviderExample(chan)).Wait();
-            Task.Run(() => ProductProviderExample.Run(chan)).Wait();
+
+            // Task.Run(() => ProductProviderExample.Run(chan)).Wait();
+            Task.Run(() => new TolalImpactResultExample(chan).Run()).Wait();
             Console.ReadKey();
         }
 
