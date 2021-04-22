@@ -72,6 +72,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CategoryTree.cs" />
+    <Compile Include="Examples.cs" />
     <Compile Include="Factory.cs" />
     <Compile Include="FlowFetch.cs" />
     <Compile Include="FlowQuery.cs" />

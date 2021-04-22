@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Grpc.Core;
@@ -27,7 +26,7 @@ namespace DemoApp
             // Task.Run(() => ProviderExample(chan)).Wait();
 
             // Task.Run(() => ProductProviderExample.Run(chan)).Wait();
-            Task.Run(() => new TolalImpactResultExample(chan).Run()).Wait();
+            Task.Run(() => TolalImpactResultExample.Run(chan)).Wait();
             Console.ReadKey();
         }
 
