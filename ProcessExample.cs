@@ -106,9 +106,10 @@ namespace DemoApp
             var hasImpacts = false;
             while (await impacts.MoveNext())
             {
-                var impact = impacts.Current;
-                Log($"{impact.ImpactCategory.Name}: {impact.Value}" +
-                    $" {impact.ImpactCategory.RefUnit}");
+                var r = impacts.Current;
+                if (r.Impact == null)
+                    continue;
+                Log($"{r.Impact.Name}: {r.Value} {r.Impact.RefUnit}");
                 hasImpacts = true;
             }
 
