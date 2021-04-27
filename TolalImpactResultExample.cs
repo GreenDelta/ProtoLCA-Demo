@@ -22,7 +22,9 @@ namespace DemoApp
             while (await impacts.MoveNext())
             {
                 var r = impacts.Current;
-                Log($"  .. {r.ImpactCategory.Name} = {r.Value} {r.ImpactCategory.RefUnit}");
+                if (r.Impact == null)
+                    continue;
+                Log($"  .. {r.Impact.Name} = {r.Value} {r.Impact.RefUnit}");
             }
             results.Dispose(result);
         }
