@@ -38,7 +38,7 @@ namespace DemoApp
             var groupResponse = data.GetAll(new GetAllRequest
             {
                 ModelType = ModelType.UnitGroup,
-                PageSize = -1, // no paging
+                SkipPaging = true,
             });
             var groups = new Dictionary<string, UnitGroup>();
             foreach (var ds in groupResponse.DataSet)
@@ -53,7 +53,7 @@ namespace DemoApp
             var propResponse = data.GetAll(new GetAllRequest
             {
                 ModelType = ModelType.FlowProperty,
-                PageSize = -1,
+                SkipPaging = true,
             });
             var props = new Dictionary<string, FlowProperty>();
             foreach (var ds in propResponse.DataSet)
