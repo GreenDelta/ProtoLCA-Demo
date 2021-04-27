@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Grpc.Core;
+﻿using Grpc.Core;
 using ProtoLCA;
 using ProtoLCA.Services;
 using static DemoApp.Util;
@@ -24,10 +18,11 @@ namespace DemoApp
             this.channel = channel;
         }
 
-        public async void Run()
+        public void Run()
         {
             var service = new DataFetchService.DataFetchServiceClient(channel);
 
+            // first page of flows
             Log("Get the first page of all flows");
             var flows = service.GetAll(new GetAllRequest
             {
@@ -38,14 +33,34 @@ namespace DemoApp
             foreach (var dataSet in flows.DataSet)
             {
                 i++;
-                Log($" .. {i}. {dataSet.Flow.Name}");
+                Log($"  .. {i}. {dataSet.Flow.Name}");
                 if (i >= 5)
                     break;
             }
             Log($"  .. {flows.PageSize - i} more");
 
+            // all unit groups
             Log("Get all unit groups from the database");
-
+            var groups = service.GetAll(new GetAllRequest
+            {
+                ModelType = ModelType.UnitGroup,
+                SkipPaging = true
+            });
+            foreach (var dataSet in groups.DataSet)
+            {
+                var unitGroup = dataSet.UnitGroup;
+                Unit refUnit = null;
+                foreach (var unit in unitGroup.Units)
+                {
+                    if (unit.ReferenceUnit)
+                    {
+                        refUnit = unit;
+                        break;
+                    }
+                }
+                var ru = refUnit != null ? refUnit.Name : "?";
+                Log($"  .. {unitGroup.Name}; reference unit = {ru}");
+            }
 
         }
 

@@ -80,7 +80,7 @@ namespace DemoApp
         private async Task<Ref> SelectImpact(Result result)
         {
             Log("  .. select an impact category from the result");
-            var impacts = results.getImpactCategories(result).ResponseStream;
+            var impacts = results.GetImpactCategories(result).ResponseStream;
             var collected = new List<Ref>();
             while (await impacts.MoveNext())
             {
