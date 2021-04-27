@@ -73,6 +73,7 @@
   <ItemGroup>
     <Compile Include="CategoryTree.cs" />
     <Compile Include="ContributionResultExample.cs" />
+    <Compile Include="DescriptorExample.cs" />
     <Compile Include="Examples.cs" />
     <Compile Include="Factory.cs" />
     <Compile Include="FlowFetch.cs" />

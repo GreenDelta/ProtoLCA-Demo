@@ -30,7 +30,8 @@ namespace DemoApp
             // Task.Run(() => new ContributionResultExample(chan).Run()).Wait();
 
             // new ContributionResultExample(chan).Run();
-            new GetAllExample(chan).Run();
+            // new GetAllExample(chan).Run();
+            new DescriptorExample(chan).Run();
             Console.ReadKey();
         }
 
