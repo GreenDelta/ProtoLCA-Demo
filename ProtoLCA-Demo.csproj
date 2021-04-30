@@ -72,6 +72,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CategoryTree.cs" />
+    <Compile Include="CategoryTreeExample.cs" />
     <Compile Include="ContributionResultExample.cs" />
     <Compile Include="DescriptorExample.cs" />
     <Compile Include="Examples.cs" />

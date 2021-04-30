@@ -31,7 +31,8 @@ namespace DemoApp
 
             // new ContributionResultExample(chan).Run();
             // new GetAllExample(chan).Run();
-            new DescriptorExample(chan).Run();
+            // new DescriptorExample(chan).Run();
+            new CategoryTreeExample(chan).Run();
             Console.ReadKey();
         }
 
