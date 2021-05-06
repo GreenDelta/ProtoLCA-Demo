@@ -14,9 +14,7 @@ namespace DemoApp
     {
         static void Main()
         {
-            var chan = new Channel(
-                "localhost:8080",
-                ChannelCredentials.Insecure);
+            var chan = new Channel("localhost:8080", ChannelCredentials.Insecure);
             // Task.Run(() => UnitMappingExample(chan)).Wait();
             // Task.Run(() => FlowMappingExample(chan)).Wait();
             // Task.Run(() => ProcessExample.Run(chan)).Wait();
@@ -32,8 +30,63 @@ namespace DemoApp
             // new ContributionResultExample(chan).Run();
             // new GetAllExample(chan).Run();
             // new DescriptorExample(chan).Run();
-            new CategoryTreeExample(chan).Run();
-            Console.ReadKey();
+
+            var examples = new Example[]
+            {
+                new ContributionResultExample(chan),
+                new CategoryTreeExample(chan),
+            };
+
+            while (true)
+            {
+
+                // print the examples
+                Log("Enter the number of the example that you want to execute:");
+                for (int i = 0; i < examples.Length; i++)
+                {
+                    Log($"  - {i + 1} - {examples[i].Description()}");
+                }
+                Log("  - or type exit (e) or quit (q) to exit");
+
+                // select an example
+                var line = Console.ReadLine().Trim().ToLower();
+                if (line.StartsWith("e") || line.StartsWith("q")) break;
+                Example example = null;
+                try
+                {
+                    var i = int.Parse(line);
+                    if (i >= 1 && i <= examples.Length)
+                    {
+                        example = examples[i - 1];
+                    }
+
+                }
+                catch (Exception) { }
+
+                if (example == null)
+                {
+                    Log("invalid number; try again");
+                    continue;
+                }
+
+                Log($"Executing example: {example.Description()}...");
+                example.Run();
+
+
+                // ask to run again
+                Log("");
+                Log("Run again? yes (y)?");
+                line = Console.ReadLine().Trim().ToLower();
+                if (line.StartsWith("y"))
+                {
+                    continue;
+                }
+                else
+                {
+                    break;
+                }
+
+            }
         }
 
         /// <summary>

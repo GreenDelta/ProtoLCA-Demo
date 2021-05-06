@@ -10,7 +10,7 @@ using Service = ProtoLCA.Services.ResultService.ResultServiceClient;
 
 namespace DemoApp
 {
-    class ContributionResultExample
+    class ContributionResultExample : Example
     {
         private readonly Channel channel;
         private readonly Service results;
@@ -21,19 +21,29 @@ namespace DemoApp
             this.results = new Service(channel);
         }
 
-        public async void Run()
+        public string Description()
+        {
+            return "Calculate process contribution results";
+        }
+
+        public void Run()
+        {
+            Exec().Wait();
+        }
+
+        public async Task<bool> Exec()
         {
             Log("Get contribution results");
-            var result = await Examples.CalculateFirstProcessResult(channel);
+            var result = await Examples.CalculateSomeProcessResult(channel);
             if (result == null)
-                return;
+                return false;
 
             // select a random tech-flow and impact category from the result
             // for which we calculate the contributions
             var techFlow = await SelectTechFlow(result);
             var impact = await SelectImpact(result);
             if (techFlow == null || impact == null)
-                return;
+                return false;
 
             Log("  .. get contributions of "
                 + $"{techFlow.Process.Name} to {impact.Name}");
@@ -52,6 +62,7 @@ namespace DemoApp
             Log($"  .. total of 1: {totalOfOne.Value} {impact.RefUnit}");
 
             results.Dispose(result);
+            return true;
         }
 
         private async Task<TechFlow> SelectTechFlow(Result result)

@@ -15,9 +15,8 @@ namespace DemoApp
     public static class Examples
     {
 
-        // Get the first data set descriptor (Ref) of the given type from the
-        // data service.
-        public static async Task<Ref> GetFirstDescriptorOf(
+        // Selects a random descriptor of the given type from the database.
+        public static async Task<Ref> GetSomeDescriptorOf(
             Channel channel, ModelType type)
         {
             Log($"  .. fetch all descriptors of type {type}");
@@ -26,23 +25,29 @@ namespace DemoApp
             {
                 ModelType = type
             }).ResponseStream;
-            
-            if (await descriptors.MoveNext())
+
+            var collected = new List<Ref>();
+            while (await descriptors.MoveNext())
             {
-                var d = descriptors.Current;
-                Log($"  .. selected {type} {d.Name}");
-                return d;
+                collected.Add(descriptors.Current);
             }
-            Log($"  .. no data set of type {type} found");
-            return null;
+            if (collected.Count == 0)
+            {
+                Log($"  .. no data set of type {type} found");
+                return null;
+            }
+
+            var idx = new Random().Next(0, collected.Count);
+            var selected = collected[idx];
+            Log($"  .. selected {type} {selected.Name}");
+            return selected;
         }
 
-        // Tries to calculate the result of the first process in the database.
-        public static async Task<Result> CalculateFirstProcessResult(
+        // Tries to calculate the result of some process in the database.
+        public static async Task<Result> CalculateSomeProcessResult(
             Channel channel)
         {
-            var process = await GetFirstDescriptorOf(
-                channel, ModelType.Process);
+            var process = await GetSomeDescriptorOf(channel, ModelType.Process);
             if (process == null)
             {
                 Log("=> database has no processes; cannot calculate result");
@@ -50,12 +55,13 @@ namespace DemoApp
             }
             Log($"  .. try to calculate result of process {process.Name}");
 
-            var method = await GetFirstDescriptorOf(
+            var method = await GetSomeDescriptorOf(
                 channel, ModelType.ImpactMethod);
             if (method != null)
             {
                 Log($"  .. calculate results with LCIA method {method.Name}");
-            } else 
+            }
+            else
             {
                 Log("  .. calculate results without LCIA method");
             }

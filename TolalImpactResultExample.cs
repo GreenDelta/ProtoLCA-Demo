@@ -12,7 +12,7 @@ namespace DemoApp
         {
             Log("Get the total LCIA results of a process");
 
-            var result = await Examples.CalculateFirstProcessResult(channel);
+            var result = await Examples.CalculateSomeProcessResult(channel);
             if (result == null)
                 return;
 

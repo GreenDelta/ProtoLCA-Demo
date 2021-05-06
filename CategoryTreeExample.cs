@@ -5,13 +5,18 @@ using static DemoApp.Util;
 
 namespace DemoApp
 {
-    class CategoryTreeExample
+    class CategoryTreeExample : Example
     {
         private readonly Channel channel;
 
         public CategoryTreeExample(Channel channel)
         {
             this.channel = channel;
+        }
+
+        public string Description()
+        {
+            return "Get the category tree for flows";
         }
 
         public void Run()
