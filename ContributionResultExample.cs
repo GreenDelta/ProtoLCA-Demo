@@ -31,7 +31,7 @@ namespace DemoApp
             Exec().Wait();
         }
 
-        public async Task<bool> Exec()
+        private async Task<bool> Exec()
         {
             var result = await Examples.CalculateSomeProcessResult(channel);
             if (result == null)

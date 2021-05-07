@@ -30,6 +30,7 @@ namespace DemoApp
                 new ProductProviderExample(chan),
                 new TolalResultExample(chan),
                 new ContributionResultExample(chan),
+                new ResultImpactFactorExample(chan),
             };
 
             while (true)
