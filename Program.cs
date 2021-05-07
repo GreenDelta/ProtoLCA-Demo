@@ -19,7 +19,6 @@ namespace DemoApp
             // Task.Run(() => FlowMappingExample(chan)).Wait();
             // Task.Run(() => ProcessExample.Run(chan)).Wait();
             // Task.Run(() => PrintAllMappingFiles(chan)).Wait();
-            // Task.Run(() => CategoryTreeExample(chan)).Wait();
             // Task.Run(() => PrintImpacts(chan)).Wait();
 
             var examples = new Example[]
@@ -178,62 +177,6 @@ namespace DemoApp
                 }
 
             }
-        }
-
-        /// <summary>
-        /// Prints the category tree of the database on the screen. Also,
-        /// it writes the first 5 content items of the non-empty
-        /// categories. Thus, this produces quite some output and for
-        /// large databases.
-        /// </summary>
-        private static async void CategoryTreeExample(Channel chan)
-        {
-            var data = new DataFetchService.DataFetchServiceClient(chan);
-            var tree = await CategoryTree.Build(data);
-            var roots = tree.RootsOf(ModelType.Flow);
-
-            /*
-            // a function that returns the first five items of a
-            // category in the tree
-            async Task<List<Ref>> descriptorsOf(CategoryNode node)
-            {
-                var stream = data.GetDescriptors(new DescriptorRequest
-                {
-                    Type = node.ModelType,
-                    Category = node.Category.Id,
-                }).ResponseStream;
-                var descritpors = new List<Ref>();
-                var i = 0;
-                while (await stream.MoveNext())
-                {
-                    i++;
-                    descritpors.Add(stream.Current);
-                    if (i > 5) break;
-                }
-                return descritpors;
-            }
-
-            async Task print((int, List<CategoryNode>) pair)
-            {
-                var (depth, nodes) = pair;
-                var offset = " ".Repeat(depth * 2);
-                foreach (var node in nodes)
-                {
-                    var line = string.Format("{0}+ {1}", offset, node.Name);
-                    Console.WriteLine(line);
-                    // expand the tree recursively
-                    await print((depth + 1, node.Childs));
-                    // print the category content
-                    foreach (var d in await descriptorsOf(node))
-                    {
-                        var dLine = string.Format("{0} - {1}", offset, d.Name);
-                        Console.WriteLine(dLine);
-                    }
-                }
-            }
-
-            await print((0, roots));
-            */
         }
     }
 }

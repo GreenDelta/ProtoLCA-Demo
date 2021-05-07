@@ -71,7 +71,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CategoryTree.cs" />
     <Compile Include="CategoryTreeExample.cs" />
     <Compile Include="ContributionResultExample.cs" />
     <Compile Include="GetFlowDescriptorsExample.cs" />
