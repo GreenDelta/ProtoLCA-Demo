@@ -8,12 +8,9 @@ using ProtoLCA.Services;
 
 using static DemoApp.Util;
 
-namespace DemoApp
-{
-    class Program
-    {
-        static void Main()
-        {
+namespace DemoApp {
+    class Program {
+        static void Main() {
             var chan = new Channel("localhost:8080", ChannelCredentials.Insecure);
             // Task.Run(() => UnitMappingExample(chan)).Wait();
             // Task.Run(() => FlowMappingExample(chan)).Wait();
@@ -21,12 +18,12 @@ namespace DemoApp
             // Task.Run(() => PrintAllMappingFiles(chan)).Wait();
             // Task.Run(() => PrintImpacts(chan)).Wait();
 
-            var examples = new Example[]
-            {
+            var examples = new Example[] {
                 new CategoryTreeExample(chan),
                 new CategoryContentExample(chan),
                 new GetAllExample(chan),
                 new GetFlowDescriptorsExample(chan),
+                new FlowSearchExample(chan),
                 new ProductProviderExample(chan),
                 new GetImpactMethodsExample(chan),
                 new TolalResultExample(chan),
@@ -34,13 +31,11 @@ namespace DemoApp
                 new ResultImpactFactorExample(chan),
             };
 
-            while (true)
-            {
+            while (true) {
 
                 // print the examples
                 Log("\nEnter the number of the example that you want to execute:");
-                for (int i = 0; i < examples.Length; i++)
-                {
+                for (int i = 0; i < examples.Length; i++) {
                     Log($"  {i + 1} - {examples[i].GetType().Name}");
                     Log($"      {examples[i].Description()}\n");
                 }
@@ -50,18 +45,13 @@ namespace DemoApp
                 var line = Console.ReadLine().Trim().ToLower();
                 if (line.StartsWith("e") || line.StartsWith("q")) break;
                 Example example = null;
-                try
-                {
+                try {
                     var i = int.Parse(line);
-                    if (i >= 1 && i <= examples.Length)
-                    {
+                    if (i >= 1 && i <= examples.Length) {
                         example = examples[i - 1];
                     }
-
-                }
-                catch (Exception) { }
-                if (example == null)
-                {
+                } catch (Exception) { }
+                if (example == null) {
                     Log("invalid number; try again\n");
                     continue;
                 }
@@ -70,25 +60,19 @@ namespace DemoApp
                 Log($"\nExecuting example: {example.GetType().Name}...");
                 var start = DateTime.Now;
                 example.Run();
-                var time = (int)DateTime.Now.Subtract(start).TotalMilliseconds;
-                if (time > 1000)
-                {
+                var time = (int) DateTime.Now.Subtract(start).TotalMilliseconds;
+                if (time > 1000) {
                     Log($"\n  .. finished in {time / 1000} s");
-                }
-                else
-                {
+                } else {
                     Log($"\n  .. finished in {time} ms");
                 }
 
                 // ask to run again
                 Log("\nRun again? yes (y)?");
                 line = Console.ReadLine().Trim().ToLower();
-                if (line.StartsWith("y"))
-                {
+                if (line.StartsWith("y")) {
                     continue;
-                }
-                else
-                {
+                } else {
                     break;
                 }
 
@@ -105,8 +89,7 @@ namespace DemoApp
         /// application you probably want to separate these steps. See
         /// the `FlowFetch` for implementation details.
         /// </summary>
-        private static async void FlowMappingExample(Channel chan)
-        {
+        private static async void FlowMappingExample(Channel chan) {
             var flows = await FlowFetch.Create(
                 chan, mapping: "ProtoLCA-Demo.csv");
 
@@ -139,8 +122,7 @@ namespace DemoApp
         /// Shows how to map a unit name to the corresponding unit,
         /// unit group, and flow property objects in openLCA.
         /// </summary>
-        private static async void UnitMappingExample(Channel chan)
-        {
+        private static async void UnitMappingExample(Channel chan) {
             var index = await UnitIndex.Build(chan);
             var tons = index.EntryOf("t");
             Log($"unit: {tons.Unit.Name}");
@@ -149,12 +131,10 @@ namespace DemoApp
             Log($"conversion factor: {tons.Factor}");
         }
 
-        private static async void PrintAllMappingFiles(Channel chan)
-        {
+        private static async void PrintAllMappingFiles(Channel chan) {
             var service = new FlowMapService.FlowMapServiceClient(chan);
             var mappings = service.GetAll(new Empty()).ResponseStream;
-            while (await mappings.MoveNext())
-            {
+            while (await mappings.MoveNext()) {
                 var name = mappings.Current.Name;
                 Log($"Found mapping: {name}");
             }
