@@ -26,6 +26,7 @@ namespace DemoApp {
                 new FlowSearchExample(chan),
                 new ProductProviderExample(chan),
                 new GetImpactMethodsExample(chan),
+                new FlowMappingExample(chan),
                 new TolalResultExample(chan),
                 new ContributionResultExample(chan),
                 new ResultImpactFactorExample(chan),
@@ -89,7 +90,7 @@ namespace DemoApp {
         /// application you probably want to separate these steps. See
         /// the `FlowFetch` for implementation details.
         /// </summary>
-        private static async void FlowMappingExample(Channel chan) {
+        private static async void _FlowMappingExample(Channel chan) {
             var flows = await FlowFetch.Create(
                 chan, mapping: "ProtoLCA-Demo.csv");
 

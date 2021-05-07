@@ -7,32 +7,29 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using ProtoLCA;
 using ProtoLCA.Services;
+using Google.Protobuf.WellKnownTypes;
 using static DemoApp.Util;
+using DataService = ProtoLCA.Services.DataFetchService.DataFetchServiceClient;
+using FlowMapService = ProtoLCA.Services.FlowMapService.FlowMapServiceClient;
 
 
-namespace DemoApp
-{
-    public static class Examples
-    {
+namespace DemoApp {
+    public static class Examples {
 
         // Selects a random descriptor of the given type from the database.
         public static async Task<Ref> GetSomeDescriptorOf(
-            Channel channel, ModelType type)
-        {
+            Channel channel, ModelType type) {
             Log($"  .. fetch all descriptors of type {type}");
-            var fetch = new DataFetchService.DataFetchServiceClient(channel);
-            var descriptors = fetch.GetDescriptors(new GetDescriptorsRequest
-            {
+            var service = new DataService(channel);
+            var descriptors = service.GetDescriptors(new GetDescriptorsRequest {
                 ModelType = type
             }).ResponseStream;
 
             var collected = new List<Ref>();
-            while (await descriptors.MoveNext())
-            {
+            while (await descriptors.MoveNext()) {
                 collected.Add(descriptors.Current);
             }
-            if (collected.Count == 0)
-            {
+            if (collected.Count == 0) {
                 Log($"  .. no data set of type {type} found");
                 return null;
             }
@@ -43,13 +40,31 @@ namespace DemoApp
             return selected;
         }
 
+        public static async Task<FlowMap> GetExampleFlowMap(Channel channel) {
+            var service = new FlowMapService(channel);
+            var name = "ProtoLCA-Example-Mapping.csv";
+            Log($"  .. try to find example flow map '{name}'");
+            var infos = service.GetAll(new Empty()).ResponseStream;
+            while (await infos.MoveNext()) {
+                var info = infos.Current;
+                if (name.EqualsIgnoreCase(info.Name)) {
+                    Log("  .. found it");
+                    return service.Get(info);
+                }
+            }
+            Log("  .. does not exist; initialized new");
+            var map = new FlowMap {
+                Name = name,
+                Id = Guid.NewGuid().ToString()
+            };
+            return map;
+        }
+
         // Tries to calculate the result of some process in the database.
         public static async Task<Result> CalculateSomeProcessResult(
-            Channel channel)
-        {
+            Channel channel) {
             var process = await GetSomeDescriptorOf(channel, ModelType.Process);
-            if (process == null)
-            {
+            if (process == null) {
                 Log("=> database has no processes; cannot calculate result");
                 return null;
             }
@@ -57,16 +72,12 @@ namespace DemoApp
 
             var method = await GetSomeDescriptorOf(
                 channel, ModelType.ImpactMethod);
-            if (method != null)
-            {
+            if (method != null) {
                 Log($"  .. calculate results with LCIA method {method.Name}");
-            }
-            else
-            {
+            } else {
                 Log("  .. calculate results without LCIA method");
             }
-            var setup = new CalculationSetup
-            {
+            var setup = new CalculationSetup {
                 ProductSystem = process,
                 ImpactMethod = method,
                 // calculate it for 1 unit of the reference flow

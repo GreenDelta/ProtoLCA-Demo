@@ -5,40 +5,33 @@ using ProtoLCA;
 using ProtoLCA.Services;
 using static DemoApp.Util;
 
-namespace DemoApp
-{
+namespace DemoApp {
     // In this example, we search for the providers of a product flow. Such
     // providers are processes that produce this product; thus, have it on the
     // the output side. For waste flows this is similar but a "provider" of a
     // waste flow is a waste treatment process that has this flow on the input
     // side.
-    class ProductProviderExample : Example
-    {
+    class ProductProviderExample : Example {
         private readonly Channel channel;
 
-        public ProductProviderExample(Channel channel)
-        {
+        public ProductProviderExample(Channel channel) {
             this.channel = channel;
         }
 
-        public string Description()
-        {
+        public string Description() {
             return "Calling GetProvidersFor: get the providers of a product flow";
         }
 
-        public void Run()
-        {
+        public void Run() {
             Exec().Wait();
         }
 
-        private async Task<bool> Exec()
-        {
+        private async Task<bool> Exec() {
             var service = new DataFetchService.DataFetchServiceClient(channel);
 
             // first, we fetch the descriptors of all flows in the database
             Log("  .. get all flow descriptors");
-            var descriptors = service.GetDescriptors(new GetDescriptorsRequest
-            {
+            var descriptors = service.GetDescriptors(new GetDescriptorsRequest {
                 ModelType = ModelType.Flow
             }).ResponseStream;
 
@@ -47,11 +40,9 @@ namespace DemoApp
             int flowCount = 0;
             bool foundSomething = false;
             int trials = 0;
-            while (await descriptors.MoveNext())
-            {
+            while (await descriptors.MoveNext()) {
                 flowCount++;
-                if (flowCount % 5000 == 0)
-                {
+                if (flowCount % 5000 == 0) {
                     Log($"  .. checked {flowCount} flows");
                 }
 
@@ -64,19 +55,17 @@ namespace DemoApp
                 // try to get providers of the product
                 Log($"  .. check product {productRef.Name}");
                 var providers = service.GetProvidersFor(productRef).ResponseStream;
-                while (await providers.MoveNext())
-                {
+                while (await providers.MoveNext()) {
                     foundSomething = true;
                     var provider = providers.Current;
-                    Log($"  .. => found provider {provider.Name}");
+                    Log($"  .. => found provider {provider.Name} - {provider.Location}");
                 }
 
                 if (foundSomething || trials >= 10)
                     break;
             }
 
-            if (!foundSomething)
-            {
+            if (!foundSomething) {
                 Log("  .. could not find product providers;" +
                     $" tried with ${trials} products");
                 return false;
