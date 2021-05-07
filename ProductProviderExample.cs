@@ -1,4 +1,6 @@
-﻿using Grpc.Core;
+﻿using System.Threading.Tasks;
+
+using Grpc.Core;
 using ProtoLCA;
 using ProtoLCA.Services;
 using static DemoApp.Util;
@@ -10,11 +12,27 @@ namespace DemoApp
     // the output side. For waste flows this is similar but a "provider" of a
     // waste flow is a waste treatment process that has this flow on the input
     // side.
-    class ProductProviderExample
+    class ProductProviderExample : Example
     {
-        internal static async void Run(Channel channel)
+        private readonly Channel channel;
+
+        public ProductProviderExample(Channel channel)
         {
-            Log("Search for providers of a product flow ...");
+            this.channel = channel;
+        }
+
+        public string Description()
+        {
+            return "Calling GetProvidersFor: get the providers of a product flow";
+        }
+
+        public void Run()
+        {
+            Exec().Wait();
+        }
+
+        private async Task<bool> Exec()
+        {
             var service = new DataFetchService.DataFetchServiceClient(channel);
 
             // first, we fetch the descriptors of all flows in the database
@@ -59,9 +77,11 @@ namespace DemoApp
 
             if (!foundSomething)
             {
-                Log("Could not find product providers;" +
+                Log("  .. could not find product providers;" +
                     $" tried with ${trials} products");
+                return false;
             }
+            return true;
         }
     }
 }

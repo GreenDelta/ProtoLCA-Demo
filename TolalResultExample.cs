@@ -96,14 +96,10 @@ namespace DemoApp
                 }
 
                 Log($"  .. {name} ({category}): {amount} {unit}");
-
-                i++;
-                if (i > 10)
-                    break;
             }
             if (i < flowResults.Count)
             {
-                Log($"  .. {flowResults.Count - i} more");
+                Log($"  .. {flowResults.Count - i + 1} more");
             }
         }
     }

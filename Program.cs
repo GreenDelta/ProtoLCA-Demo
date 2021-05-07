@@ -21,16 +21,13 @@ namespace DemoApp
             // Task.Run(() => PrintAllMappingFiles(chan)).Wait();
             // Task.Run(() => CategoryTreeExample(chan)).Wait();
             // Task.Run(() => PrintImpacts(chan)).Wait();
-            // Task.Run(() => ProviderExample(chan)).Wait();
-
-            // Task.Run(() => ProductProviderExample.Run(chan)).Wait();
-            // Task.Run(() => TolalImpactResultExample.Run(chan)).Wait();
 
             var examples = new Example[]
             {
                 new CategoryTreeExample(chan),
                 new GetAllExample(chan),
                 new GetFlowDescriptorsExample(chan),
+                new ProductProviderExample(chan),
                 new TolalResultExample(chan),
                 new ContributionResultExample(chan),
             };
