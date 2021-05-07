@@ -24,6 +24,7 @@ namespace DemoApp
             var examples = new Example[]
             {
                 new CategoryTreeExample(chan),
+                new CategoryContentExample(chan),
                 new GetAllExample(chan),
                 new GetFlowDescriptorsExample(chan),
                 new ProductProviderExample(chan),

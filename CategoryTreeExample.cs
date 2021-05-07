@@ -26,18 +26,18 @@ namespace DemoApp
             {
                 ModelType = ModelType.Flow
             });
-            printTree(tree, 0);
+            PrintTree(tree, 0);
 
         }
 
-        private void printTree(ProtoLCA.Services.CategoryTree tree, int depth)
+        private void PrintTree(CategoryTree tree, int depth)
         {
             var offset = new string(' ', 2 * depth);
             var label = depth == 0 ? "#root" : tree.Name;
             Log($"  .. {offset}+ {label}");
             foreach (var subTree in tree.SubTree)
             {
-                printTree(subTree, depth + 1);
+                PrintTree(subTree, depth + 1);
             }
         }
 
