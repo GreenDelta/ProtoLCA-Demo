@@ -28,6 +28,7 @@ namespace DemoApp
                 new GetAllExample(chan),
                 new GetFlowDescriptorsExample(chan),
                 new ProductProviderExample(chan),
+                new GetImpactMethodsExample(chan),
                 new TolalResultExample(chan),
                 new ContributionResultExample(chan),
                 new ResultImpactFactorExample(chan),
@@ -40,9 +41,10 @@ namespace DemoApp
                 Log("\nEnter the number of the example that you want to execute:");
                 for (int i = 0; i < examples.Length; i++)
                 {
-                    Log($"  - {i + 1} - {examples[i].Description()}");
+                    Log($"  {i + 1} - {examples[i].GetType().Name}");
+                    Log($"      {examples[i].Description()}\n");
                 }
-                Log("  - or type exit (e) or quit (q) to exit\n");
+                Log("  or type exit (e) or quit (q) to exit\n");
 
                 // select an example
                 var line = Console.ReadLine().Trim().ToLower();
@@ -65,7 +67,7 @@ namespace DemoApp
                 }
 
                 // execute the example and measure the execution time
-                Log($"\nExecuting example: {example.GetType().FullName}...");
+                Log($"\nExecuting example: {example.GetType().Name}...");
                 var start = DateTime.Now;
                 example.Run();
                 var time = (int)DateTime.Now.Subtract(start).TotalMilliseconds;
@@ -155,28 +157,6 @@ namespace DemoApp
             {
                 var name = mappings.Current.Name;
                 Log($"Found mapping: {name}");
-            }
-        }
-
-        private static async void PrintImpacts(Channel chan)
-        {
-            var client = new DataFetchService.DataFetchServiceClient(chan);
-            var request = new GetAllRequest
-            {
-                ModelType = ModelType.ImpactCategory,
-                PageSize = 100,
-            };
-            var response = client.GetAll(request);
-            foreach (var ds in response.DataSet)
-            {
-                var method = ds.ImpactMethod;
-                Console.WriteLine("+ " + method.Name);
-                foreach (var impact in method.ImpactCategories)
-                {
-                    Console.WriteLine(string.Format("  - {0} [{1}]",
-                        impact.Name, impact.RefUnit));
-                }
-
             }
         }
     }

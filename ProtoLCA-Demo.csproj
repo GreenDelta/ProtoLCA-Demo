@@ -81,6 +81,7 @@
     <Compile Include="FlowFetch.cs" />
     <Compile Include="FlowQuery.cs" />
     <Compile Include="GetAllExample.cs" />
+    <Compile Include="GetImpactMethodsExample.cs" />
     <Compile Include="ProcessExample.cs" />
     <Compile Include="ProductProviderExample.cs" />
     <Compile Include="Program.cs" />
