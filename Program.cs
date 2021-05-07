@@ -25,13 +25,13 @@ namespace DemoApp
 
             // Task.Run(() => ProductProviderExample.Run(chan)).Wait();
             // Task.Run(() => TolalImpactResultExample.Run(chan)).Wait();
-            // Task.Run(() => new ContributionResultExample(chan).Run()).Wait();
 
             var examples = new Example[]
             {
                 new CategoryTreeExample(chan),
                 new GetAllExample(chan),
                 new GetFlowDescriptorsExample(chan),
+                new TolalResultExample(chan),
                 new ContributionResultExample(chan),
             };
 
@@ -67,10 +67,10 @@ namespace DemoApp
                 }
 
                 // execute the example and measure the execution time
-                Log($"\nExecuting example: {example.Description()}...");
+                Log($"\nExecuting example: {example.GetType().FullName}...");
                 var start = DateTime.Now;
                 example.Run();
-                var time = (int) DateTime.Now.Subtract(start).TotalMilliseconds;
+                var time = (int)DateTime.Now.Subtract(start).TotalMilliseconds;
                 if (time > 1000)
                 {
                     Log($"\n  .. finished in {time / 1000} s");
