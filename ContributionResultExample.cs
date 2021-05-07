@@ -23,7 +23,7 @@ namespace DemoApp
 
         public string Description()
         {
-            return "Calculate process contribution results";
+            return "Calling Get*Contribution: calculate process contribution results";
         }
 
         public void Run()
@@ -33,7 +33,6 @@ namespace DemoApp
 
         public async Task<bool> Exec()
         {
-            Log("Get contribution results");
             var result = await Examples.CalculateSomeProcessResult(channel);
             if (result == null)
                 return false;

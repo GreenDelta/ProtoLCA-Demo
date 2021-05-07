@@ -27,26 +27,24 @@ namespace DemoApp
             // Task.Run(() => TolalImpactResultExample.Run(chan)).Wait();
             // Task.Run(() => new ContributionResultExample(chan).Run()).Wait();
 
-            // new ContributionResultExample(chan).Run();
-            // new GetAllExample(chan).Run();
-            // new DescriptorExample(chan).Run();
-
             var examples = new Example[]
             {
-                new ContributionResultExample(chan),
                 new CategoryTreeExample(chan),
+                new GetAllExample(chan),
+                new GetFlowDescriptorsExample(chan),
+                new ContributionResultExample(chan),
             };
 
             while (true)
             {
 
                 // print the examples
-                Log("Enter the number of the example that you want to execute:");
+                Log("\nEnter the number of the example that you want to execute:");
                 for (int i = 0; i < examples.Length; i++)
                 {
                     Log($"  - {i + 1} - {examples[i].Description()}");
                 }
-                Log("  - or type exit (e) or quit (q) to exit");
+                Log("  - or type exit (e) or quit (q) to exit\n");
 
                 // select an example
                 var line = Console.ReadLine().Trim().ToLower();
@@ -62,20 +60,28 @@ namespace DemoApp
 
                 }
                 catch (Exception) { }
-
                 if (example == null)
                 {
-                    Log("invalid number; try again");
+                    Log("invalid number; try again\n");
                     continue;
                 }
 
-                Log($"Executing example: {example.Description()}...");
+                // execute the example and measure the execution time
+                Log($"\nExecuting example: {example.Description()}...");
+                var start = DateTime.Now;
                 example.Run();
-
+                var time = (int) DateTime.Now.Subtract(start).TotalMilliseconds;
+                if (time > 1000)
+                {
+                    Log($"\n  .. finished in {time / 1000} s");
+                }
+                else
+                {
+                    Log($"\n  .. finished in {time} ms");
+                }
 
                 // ask to run again
-                Log("");
-                Log("Run again? yes (y)?");
+                Log("\nRun again? yes (y)?");
                 line = Console.ReadLine().Trim().ToLower();
                 if (line.StartsWith("y"))
                 {

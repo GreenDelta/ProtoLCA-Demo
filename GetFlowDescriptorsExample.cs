@@ -11,27 +11,36 @@ using static DemoApp.Util;
 
 namespace DemoApp
 {
-    // This example shows how to load descriptors from a database.
-    // Descriptors are small objects that describe a data set.
-    // When you do not need the complete data set but e.g. just
-    // want to search for data it is generally better to use the
-    // data set descriptors instead of the full data sets for this.
-    class DescriptorExample
+    // This example shows how to load descriptors from a database. Descriptors
+    // are small objects that describe a data set. When you do not need the
+    // complete data set but e.g. just want to search for data it is generally
+    // better to use the data set descriptors instead of the full data sets for
+    // this.
+    class GetFlowDescriptorsExample : Example
     {
         private readonly Channel channel;
 
-        public DescriptorExample(Channel channel)
+        public GetFlowDescriptorsExample(Channel channel)
         {
             this.channel = channel;
         }
 
-        public async void Run()
+        public string Description()
+        {
+            return "Calling GetDescriptors: get all flow descriptors";
+        }
+
+        public void Run()
+        {
+            Exec().Wait();
+        }
+
+
+        public async Task<bool> Exec()
         {
             var service = new DataFetchService.DataFetchServiceClient(channel);
 
             // get all flow descriptors
-            Log("Get all flow descriptors");
-            var start = DateTime.Now;
             var response = service.GetDescriptors(new GetDescriptorsRequest
             {
                 ModelType = ModelType.Flow,
@@ -43,8 +52,7 @@ namespace DemoApp
             }
 
             // print some results
-            var time = DateTime.Now.Subtract(start).TotalSeconds;
-            Log($"  .. collected {flows.Count} in {time} seconds");
+            Log($"  .. collected {flows.Count} flow descriptors");
             int i = 0;
             foreach (var flow in flows)
             {
@@ -61,9 +69,7 @@ namespace DemoApp
                     break;
             }
             Log($"  .. {flows.Count - i} more");
-
+            return true;
         }
-
-
     }
 }

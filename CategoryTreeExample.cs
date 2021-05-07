@@ -16,19 +16,16 @@ namespace DemoApp
 
         public string Description()
         {
-            return "Get the category tree for flows";
+            return "Calling GetCategoryTree: Get the category tree for flows";
         }
 
         public void Run()
         {
             var service = new DataFetchService.DataFetchServiceClient(channel);
-
-            Log("Get the flow category tree from the data service ...");
             var tree = service.GetCategoryTree(new GetCategoryTreeRequest
             {
                 ModelType = ModelType.Flow
             });
-
             printTree(tree, 0);
 
         }

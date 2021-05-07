@@ -74,7 +74,7 @@
     <Compile Include="CategoryTree.cs" />
     <Compile Include="CategoryTreeExample.cs" />
     <Compile Include="ContributionResultExample.cs" />
-    <Compile Include="DescriptorExample.cs" />
+    <Compile Include="GetFlowDescriptorsExample.cs" />
     <Compile Include="Example.cs" />
     <Compile Include="Examples.cs" />
     <Compile Include="Factory.cs" />

@@ -9,7 +9,7 @@ namespace DemoApp
     // This class contains examples for GetAll requests. By default
     // these requests return a paged response. For small objects with
     // a small number of data sets you may want to skip the paging.     
-    class GetAllExample
+    class GetAllExample : Example
     {
         private readonly Channel channel;
 
@@ -18,12 +18,17 @@ namespace DemoApp
             this.channel = channel;
         }
 
+        public string Description()
+        {
+            return "Calling GetAll: get the first page of flows and all unit groups";
+        }
+
         public void Run()
         {
             var service = new DataFetchService.DataFetchServiceClient(channel);
 
             // first page of flows
-            Log("Get the first page of all flows");
+            Log("  .. get the first page of all flows");
             var flows = service.GetAll(new GetAllRequest
             {
                 ModelType = ModelType.Flow,
@@ -40,7 +45,7 @@ namespace DemoApp
             Log($"  .. {flows.PageSize - i} more");
 
             // all unit groups
-            Log("Get all unit groups from the database");
+            Log("\n  .. get all unit groups from the database");
             var groups = service.GetAll(new GetAllRequest
             {
                 ModelType = ModelType.UnitGroup,
