@@ -10,12 +10,12 @@ using Service = ProtoLCA.Services.ResultService.ResultServiceClient;
 
 namespace DemoApp
 {
-    class TolalResultExample : Example
+    class TotalResultExample : Example
     {
         private readonly Channel channel;
         private readonly Service results;
 
-        public TolalResultExample(Channel channel)
+        public TotalResultExample(Channel channel)
         {
             this.channel = channel;
             this.results = new Service(channel);

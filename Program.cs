@@ -26,8 +26,9 @@ namespace DemoApp {
                 new FlowSearchExample(chan),
                 new ProductProviderExample(chan),
                 new GetImpactMethodsExample(chan),
+                new UnitExample(chan),
                 new FlowMappingExample(chan),
-                new TolalResultExample(chan),
+                new TotalResultExample(chan),
                 new ContributionResultExample(chan),
                 new ResultImpactFactorExample(chan),
             };

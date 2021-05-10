@@ -148,6 +148,74 @@ namespace DemoApp {
             return null;
         }
 
+        /// <summary>
+        /// Returns the list of unit triples from the database. A unit triple
+        /// contains a unit, the corresponding unit group, and the default
+        /// flow property of that unit group. In openLCA it is a bit specific
+        /// that you link a flow amount to a flow property (e.g. dry volume) and
+        /// a unit (e.g. m3).
+        /// </summary>
+        public static List<(Unit, UnitGroup, FlowProperty)> GetUnitTriples(
+            Channel channel) {
+            Log("  .. load unit, unit group, flow property triples");
+            var service = new DataService(channel);
 
+            // collect all flow properties
+            var flowProperties = new List<FlowProperty>();
+            var propResponse = service.GetAll(new GetAllRequest {
+                ModelType = ModelType.FlowProperty,
+                SkipPaging = true,
+            });
+            foreach (var ds in propResponse.DataSet) {
+                if (ds.FlowProperty != null) {
+                    flowProperties.Add(ds.FlowProperty);
+                }
+            }
+
+            // collect the triples
+            var triples = new List<(Unit, UnitGroup, FlowProperty)>();
+            var groupResponse = service.GetAll(new GetAllRequest {
+                ModelType = ModelType.UnitGroup,
+                SkipPaging = true,
+            });
+            foreach (var ds in groupResponse.DataSet) {
+                var group = ds.UnitGroup;
+                if (group == null)
+                    continue;
+                // find the matching flow property of that unit group
+                FlowProperty property = null;
+                var defaultPropId = group.DefaultFlowProperty?.Id;
+                foreach (var candidate in flowProperties) {
+                    if (defaultPropId != null
+                        && defaultPropId.Equals(candidate.Id)) {
+                        property = candidate;
+                        break;
+                    }
+                    var groupId = candidate.UnitGroup?.Id;
+                    if (groupId == null || !groupId.Equals(group.Id))
+                        continue;
+                    if (property != null) {
+                        Log($"  .. WARNING unit group '{group.Name}' can " +
+                            $"have multiple flow properties, e.g. " +
+                            $"{property.Name} or {candidate.Name}");
+                        continue;
+                    }
+                    property = candidate;
+                }
+
+                if (property == null) {
+                    Log("  .. no default flow property found for unit" +
+                        $" group {group.Name}");
+                    continue;
+                }
+                Log("  .. selected default flow property for unit group" +
+                    $" '{group.Name}': '{property.Name}'");
+                foreach (var unit in group.Units) {
+                    triples.Add((unit, group, property));
+                }
+            }
+            Log($"  .. loaded {triples.Count} unit triples");
+            return triples;
+        }
     }
 }
