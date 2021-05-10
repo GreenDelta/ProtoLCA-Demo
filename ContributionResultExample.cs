@@ -8,31 +8,25 @@ using ProtoLCA.Services;
 using static DemoApp.Util;
 using Service = ProtoLCA.Services.ResultService.ResultServiceClient;
 
-namespace DemoApp
-{
-    class ContributionResultExample : Example
-    {
+namespace DemoApp {
+    class ContributionResultExample : Example {
         private readonly Channel channel;
         private readonly Service results;
 
-        public ContributionResultExample(Channel channel)
-        {
+        public ContributionResultExample(Channel channel) {
             this.channel = channel;
             this.results = new Service(channel);
         }
 
-        public string Description()
-        {
+        public string Description() {
             return "Calling Get*Contribution: calculate process contribution results";
         }
 
-        public void Run()
-        {
+        public void Run() {
             Exec().Wait();
         }
 
-        private async Task<bool> Exec()
-        {
+        private async Task<bool> Exec() {
             var result = await Examples.CalculateSomeProcessResult(channel);
             if (result == null)
                 return false;
@@ -47,8 +41,7 @@ namespace DemoApp
             Log("  .. get contributions of "
                 + $"{techFlow.Process.Name} to {impact.Name}");
 
-            var req = new TechFlowContributionRequest
-            {
+            var req = new TechFlowContributionRequest {
                 Result = result,
                 TechFlow = techFlow,
                 Impact = impact,
@@ -64,18 +57,15 @@ namespace DemoApp
             return true;
         }
 
-        private async Task<TechFlow> SelectTechFlow(Result result)
-        {
+        private async Task<TechFlow> SelectTechFlow(Result result) {
             Log("  .. select a tech-flow from the supply chain");
             var techFlows = results.GetTechFlows(result).ResponseStream;
             var collected = new List<TechFlow>();
-            while (await techFlows.MoveNext())
-            {
+            while (await techFlows.MoveNext()) {
                 collected.Add(techFlows.Current);
             }
 
-            if (collected.Count == 0)
-            {
+            if (collected.Count == 0) {
                 Log("=> no tech flow found in result");
                 return null;
             }
@@ -87,18 +77,15 @@ namespace DemoApp
             return selected;
         }
 
-        private async Task<Ref> SelectImpact(Result result)
-        {
+        private async Task<Ref> SelectImpact(Result result) {
             Log("  .. select an impact category from the result");
             var impacts = results.GetImpactCategories(result).ResponseStream;
             var collected = new List<Ref>();
-            while (await impacts.MoveNext())
-            {
+            while (await impacts.MoveNext()) {
                 collected.Add(impacts.Current);
             }
 
-            if (collected.Count == 0)
-            {
+            if (collected.Count == 0) {
                 Log("=> no impact category found in result");
                 return null;
             }

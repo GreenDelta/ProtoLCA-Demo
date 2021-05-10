@@ -88,5 +88,66 @@ namespace DemoApp {
             return results.Calculate(setup);
         }
 
+        /// <summary>
+        /// Searches for a flow with matching attributes in the database. It
+        /// first searches for a flow with a matching name. Then, it filters the
+        /// search result by the other attributes.
+        /// </summary>
+        /// <param name="channel">the gRPC channel</param>
+        /// <param name="type">the flow type</param>
+        /// <param name="name">the flow name</param>
+        /// <param name="unit">the reference unit of the flow</param>
+        /// <param name="category">
+        /// the flow category; this can be fragments of category path segments
+        /// (e.g. `emmissions/air`)
+        /// </param>
+        /// <returns>
+        /// a matching flow or null if no such flow could be found
+        /// </returns>
+        public static async Task<Ref> FindFlow(Channel channel, FlowType type,
+            string name, string unit, string category = "") {
+            Log($"  .. search flow {type}; {name}; {unit}");
+            var service = new DataService(channel);
+            var flows = service.Search(new SearchRequest {
+                ModelType = ModelType.Flow,
+                Query = name
+            }).ResponseStream;
+            Ref match = null;
+            while (await flows.MoveNext()) {
+                var candidate = flows.Current;
+                if (candidate.FlowType != type)
+                    continue;
+                if (!unit.Equals(candidate.RefUnit))
+                    continue;
+                if (category.IsEmpty()) {
+                    match = candidate;
+                    break;
+                }
+                if (candidate.CategoryPath == null)
+                    continue;
+                var flowCategory = candidate.CategoryPath.Join("/").ToLower();
+                var terms = category.ToLower().Split('/');
+                var categoryMatches = true;
+                foreach (var term in terms) {
+                    if (!flowCategory.Contains(term.Trim().ToLower())) {
+                        categoryMatches = false;
+                        break;
+                    }
+                }
+                if (categoryMatches) {
+                    match = candidate;
+                    break;
+                }
+            }
+
+            if (match != null) {
+                Log($"  .. found matching flow {match.Id}");
+                return match;
+            }
+            Log("  .. found no matching flow");
+            return null;
+        }
+
+
     }
 }

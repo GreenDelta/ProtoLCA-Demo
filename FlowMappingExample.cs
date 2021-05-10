@@ -67,11 +67,11 @@ namespace DemoApp {
             int count = 0;
             foreach (var (type, name, unit, category) in flowList) {
                 var (refUnit, factor) = RefUnitOf(unit);
-                var flow = await FindFlow(type, name, refUnit, category);
+                var flow = await Examples.FindFlow(channel, type, name, refUnit, category);
                 if (flow == null)
                     continue;
                 count++;
-                mapping.Mappings.Add(new FlowMapEntry {
+                var mapEntry = new FlowMapEntry {
                     From = new FlowMapRef {
                         Flow = new Ref {
                             Id = $"{type}/{name}/{unit}/{category}",
@@ -82,10 +82,17 @@ namespace DemoApp {
                     },
                     To = new FlowMapRef {
                         Flow = flow,
-                        Unit = new Ref { Name = refUnit }
+                        Unit = new Ref { Name = refUnit },
                     },
                     ConversionFactor = factor
-                });
+                };
+                mapping.Mappings.Add(mapEntry);
+                if (type != FlowType.ElementaryFlow) {
+                    var provider = await findProvider(flow);
+                    if (provider != null) {
+                        mapEntry.To.Provider = provider;
+                    }
+                }
             }
             Log($"  .. created {count} mappings");
             mappingService.Put(mapping);
@@ -101,46 +108,14 @@ namespace DemoApp {
             }
         }
 
-        private async Task<Ref> FindFlow(
-            FlowType type, string name, string unit, string category = "") {
-            Log($"  .. search flow {type}; {name}; {unit}");
-            var flows = dataService.Search(new SearchRequest {
-                ModelType = ModelType.Flow,
-                Query = name
-            }).ResponseStream;
-            Ref match = null;
-            while (await flows.MoveNext()) {
-                var candidate = flows.Current;
-                if (candidate.FlowType != type)
-                    continue;
-                if (!unit.Equals(candidate.RefUnit))
-                    continue;
-                if (category.IsEmpty()) {
-                    match = candidate;
-                    break;
-                }
-                if (candidate.CategoryPath == null)
-                    continue;
-                var flowCategory = candidate.CategoryPath.Join("/").ToLower();
-                var terms = category.ToLower().Split('/');
-                var categoryMatches = true;
-                foreach (var term in terms) {
-                    if (!flowCategory.Contains(term.Trim().ToLower())) {
-                        categoryMatches = false;
-                        break;
-                    }
-                }
-                if (categoryMatches) {
-                    match = candidate;
-                    break;
-                }
+        private async Task<Ref> findProvider(Ref flow) {
+            Log($"  .. search providers for {flow.Name}");
+            var providers = dataService.GetProvidersFor(flow).ResponseStream;
+            if (await providers.MoveNext()) {
+                var provider = providers.Current;
+                Log($"  .. found provider {provider.Name}");
+                return provider;
             }
-
-            if (match != null) {
-                Log($"  .. found matching flow {match.Id}");
-                return match;
-            }
-            Log("  .. found no matching flow");
             return null;
         }
     }
