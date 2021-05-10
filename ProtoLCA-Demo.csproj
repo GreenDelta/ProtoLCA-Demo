@@ -79,9 +79,6 @@
     <Compile Include="GetFlowDescriptorsExample.cs" />
     <Compile Include="Example.cs" />
     <Compile Include="Examples.cs" />
-    <Compile Include="Factory.cs" />
-    <Compile Include="FlowFetch.cs" />
-    <Compile Include="FlowQuery.cs" />
     <Compile Include="GetAllExample.cs" />
     <Compile Include="GetImpactMethodsExample.cs" />
     <Compile Include="ProcessExample.cs" />
