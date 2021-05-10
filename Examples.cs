@@ -208,8 +208,6 @@ namespace DemoApp {
                         $" group {group.Name}");
                     continue;
                 }
-                Log("  .. selected default flow property for unit group" +
-                    $" '{group.Name}': '{property.Name}'");
                 foreach (var unit in group.Units) {
                     triples.Add((unit, group, property));
                 }

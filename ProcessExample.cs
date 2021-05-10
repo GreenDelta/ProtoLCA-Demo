@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -25,11 +26,13 @@ namespace DemoApp {
         private readonly Channel channel;
         private readonly DataFetchService fetchService;
         private readonly DataUpdateService updateService;
+        private readonly List<(Unit, UnitGroup, FlowProperty)> unitTriples;
 
         public ProcessExample(Channel channel) {
             this.channel = channel;
             this.fetchService = new DataFetchService(channel);
             this.updateService = new DataUpdateService(channel);
+            this.unitTriples = Examples.GetUnitTriples(channel);
         }
 
         public string Description() {
@@ -42,7 +45,6 @@ namespace DemoApp {
 
         private async Task<bool> Exec() {
             var mapping = await Examples.GetExampleFlowMap(channel);
-            var unitTriples = Examples.GetUnitTriples(channel);
 
             // the inputs and outputs of our example
             var p = FlowType.ProductFlow;
@@ -83,10 +85,36 @@ namespace DemoApp {
                 var flowId = $"{type}/{name}/{unit}/{category}";
                 var mapEntry = FindMapEntry(flowId, mapping);
                 if (mapEntry != null) {
+
+                    // create the exchange from a mapped flow
                     exchange.Flow = mapEntry.To.Flow;
                     exchange.FlowProperty = mapEntry.To.FlowProperty;
                     exchange.Unit = mapEntry.To.Unit;
                     exchange.Amount = mapEntry.ConversionFactor * amount;
+
+                    if (mapEntry.To.Provider != null
+                        && ((isInput && type == FlowType.ProductFlow)
+                        || (!isInput && type == FlowType.WasteFlow))) {
+                        exchange.DefaultProvider = mapEntry.To.Provider;
+                    }
+                } else {
+
+                    var (flowRef, unitObj, propObj) = GetOrCreateFlow(
+                        type, name, unit);
+                    if (flowRef == null)
+                        continue;
+                    exchange.Flow = flowRef;
+                    exchange.FlowProperty = new Ref {
+                        EntityType = EntityType.FlowProperty,
+                        Id = propObj.Id,
+                        Name = propObj.Name,
+                    };
+                    exchange.Unit = new Ref {
+                        EntityType = EntityType.Unit,
+                        Id = unitObj.Id,
+                        Name = unitObj.Name,
+                    };
+                    exchange.Amount = amount;
                 }
 
                 if (exchange.Flow != null) {
@@ -94,7 +122,8 @@ namespace DemoApp {
                 }
             }
 
-            updateService.Put(new DataSet { Process = process });
+            var processRef = updateService.Put(new DataSet { Process = process });
+            Log($"  .. created process {processRef.Name}");
             return true;
         }
 
@@ -126,6 +155,69 @@ namespace DemoApp {
             return null;
         }
 
+        /// <summary>
+        /// Get or create a flow from the given attributes. Note that this is
+        /// just an example. Typically you would also include the flow category
+        /// and maybe other attributes.
+        /// </summary>
+        private (Ref, Unit, FlowProperty) GetOrCreateFlow(
+            FlowType type, String name, String unitName) {
+
+            // find the unit and flow property
+            FlowProperty flowProperty = null;
+            Unit unit = null;
+            foreach (var (tUnit, _, tProperty) in unitTriples) {
+                if (string.Equals(unitName, tUnit.Name)) {
+                    flowProperty = tProperty;
+                    unit = tUnit;
+                    break;
+                }
+            }
+
+            if (unit == null || flowProperty == null) {
+                Log("  .. WARNING could not find unit and flow property" +
+                    $" for '{unitName}'");
+                return (null, null, null);
+            }
+
+            // try to find an existing flow
+            var bytes = MD5.Create().ComputeHash(
+                Encoding.UTF8.GetBytes(
+                    $"{type}/{name}/{unit.Id}{flowProperty.Id}"));
+            var id = new Guid(bytes).ToString();
+            var ds = fetchService.Find(new FindRequest {
+                ModelType = ModelType.Flow,
+                Id = id,
+            });
+            if (ds.Flow != null) {
+                var existing = new Ref {
+                    EntityType = EntityType.Flow,
+                    Id = ds.Flow.Id,
+                    Name = ds.Flow.Name,
+                };
+                return (existing, unit, flowProperty);
+            }
+
+            // create a new flow
+            var flow = new Flow {
+                EntityType = EntityType.Flow,
+                Id = id,
+                Name = name,
+                Version = "00.00.001",
+                FlowType = type
+            };
+            flow.FlowProperties.Add(new FlowPropertyFactor {
+                ReferenceFlowProperty = true,
+                FlowProperty = new Ref {
+                    EntityType = EntityType.FlowProperty,
+                    Id = flowProperty.Id,
+                    Name = flowProperty.Name,
+                },
+            });
+            var flowRef = updateService.Put(new DataSet { Flow = flow });
+            Log($"  .. created new flow {flowRef.Name}");
+            return (flowRef, unit, flowProperty);
+        }
 
         internal static async void Run(Channel chan) {
             var flows = await FlowFetch.Create(chan, "ProtoLCA-Demo.csv");
