@@ -88,7 +88,6 @@
     <Compile Include="ResultImpactFactorExample.cs" />
     <Compile Include="TotalResultExample.cs" />
     <Compile Include="UnitExample.cs" />
-    <Compile Include="UnitIndex.cs" />
     <Compile Include="Util.cs" />
   </ItemGroup>
   <ItemGroup>

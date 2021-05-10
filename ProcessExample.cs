@@ -15,29 +15,31 @@ using DataUpdateService = ProtoLCA.Services.DataUpdateService.DataUpdateServiceC
 namespace DemoApp {
 
     /// <summary>
-    /// Creates an example process. It uses the mapping file that was created
-    /// in the mapping example if this is available. Otherwise it creates
-    /// new flows.
+    /// This example creates an example process. It uses the mapping file that
+    /// was created in the mapping example if this is available. Otherwise it
+    /// creates new flows.
     /// </summary>
     class ProcessExample : Example {
 
         private readonly Channel channel;
         private readonly DataFetchService fetchService;
         private readonly DataUpdateService updateService;
-        private readonly List<(Unit, UnitGroup, FlowProperty)> unitTriples;
+        private List<(Unit, UnitGroup, FlowProperty)> unitTriples;
 
         public ProcessExample(Channel channel) {
             this.channel = channel;
             this.fetchService = new DataFetchService(channel);
             this.updateService = new DataUpdateService(channel);
-            this.unitTriples = Examples.GetUnitTriples(channel);
         }
 
         public string Description() {
-            return "Creates an example process using flow mappings if possible";
+            return "Create an example process using flow mappings if possible";
         }
 
         public void Run() {
+            // we could load this in the constructor but we do it here to
+            // avoid log outputs when the example is created
+            this.unitTriples = Examples.GetUnitTriples(channel);
             Exec().Wait();
         }
 

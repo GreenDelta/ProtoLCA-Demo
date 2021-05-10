@@ -1,18 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Grpc.Core;
 using ProtoLCA;
-using ProtoLCA.Services;
-using Google.Protobuf.WellKnownTypes;
 using static DemoApp.Util;
 using DataService = ProtoLCA.Services.DataFetchService.DataFetchServiceClient;
 using MappingService = ProtoLCA.Services.FlowMapService.FlowMapServiceClient;
 
 namespace DemoApp {
+
+    /// <summary>
+    /// This example shows how to create and update flow mappings.
+    /// </summary>
     class FlowMappingExample : Example {
 
         private readonly Channel channel;
@@ -88,7 +87,7 @@ namespace DemoApp {
                 };
                 mapping.Mappings.Add(mapEntry);
                 if (type != FlowType.ElementaryFlow) {
-                    var provider = await findProvider(flow);
+                    var provider = await FindProvider(flow);
                     if (provider != null) {
                         mapEntry.To.Provider = provider;
                     }
@@ -108,7 +107,7 @@ namespace DemoApp {
             }
         }
 
-        private async Task<Ref> findProvider(Ref flow) {
+        private async Task<Ref> FindProvider(Ref flow) {
             Log($"  .. search providers for {flow.Name}");
             var providers = dataService.GetProvidersFor(flow).ResponseStream;
             if (await providers.MoveNext()) {

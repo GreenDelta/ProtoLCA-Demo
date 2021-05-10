@@ -6,11 +6,14 @@ using ProtoLCA.Services;
 using static DemoApp.Util;
 
 namespace DemoApp {
-    // In this example, we search for the providers of a product flow. Such
-    // providers are processes that produce this product; thus, have it on the
-    // the output side. For waste flows this is similar but a "provider" of a
-    // waste flow is a waste treatment process that has this flow on the input
-    // side.
+
+    /// <summary>
+    /// In this example, we search for the providers of a product flow. Such
+    /// providers are processes that produce this product; thus, have it on the
+    /// the output side. For waste flows this is similar but a "provider" of a
+    /// waste flow is a waste treatment process that has this flow on the input
+    /// side.
+    /// </summary>
     class ProductProviderExample : Example {
         private readonly Channel channel;
 
@@ -19,7 +22,7 @@ namespace DemoApp {
         }
 
         public string Description() {
-            return "Calling GetProvidersFor: get the providers of a product flow";
+            return "Get the providers of a product flow";
         }
 
         public void Run() {

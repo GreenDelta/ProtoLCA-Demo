@@ -9,6 +9,14 @@ using static DemoApp.Util;
 using Service = ProtoLCA.Services.ResultService.ResultServiceClient;
 
 namespace DemoApp {
+
+    /// <summary>
+    /// In this example, the direct and total upstream result of a
+    /// process-product related to the demand of that product in the supply
+    /// chain of a random result is calculated. It also prints the upstream
+    /// result related to one unit of output of that product which is useful
+    /// for calculating things like upstream trees.
+    /// </summary>
     class ContributionResultExample : Example {
         private readonly Channel channel;
         private readonly Service results;
@@ -19,7 +27,7 @@ namespace DemoApp {
         }
 
         public string Description() {
-            return "Calling Get*Contribution: calculate process contribution results";
+            return "Calculate process contribution results";
         }
 
         public void Run() {

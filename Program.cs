@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Threading.Tasks;
 
 using Grpc.Core;
-using Google.Protobuf.WellKnownTypes;
-using ProtoLCA;
-using ProtoLCA.Services;
-
 using static DemoApp.Util;
 
 namespace DemoApp {
@@ -35,7 +30,7 @@ namespace DemoApp {
             while (true) {
 
                 // print the examples
-                Log("\nEnter the number of the example that you want to execute:");
+                Log("\nEnter the number of the example that you want to execute:\n");
                 for (int i = 0; i < examples.Length; i++) {
                     Log($"  {i + 1} - {examples[i].GetType().Name}");
                     Log($"      {examples[i].Description()}\n");

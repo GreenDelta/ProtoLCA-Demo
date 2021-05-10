@@ -8,31 +8,30 @@ using ProtoLCA.Services;
 using static DemoApp.Util;
 using Service = ProtoLCA.Services.ResultService.ResultServiceClient;
 
-namespace DemoApp
-{
-    class ResultImpactFactorExample : Example
-    {
+namespace DemoApp {
+
+    /// <summary>
+    /// In this example some random result is calculated and then the impact
+    /// factors of that result are queried.
+    /// </summary>
+    class ResultImpactFactorExample : Example {
         private readonly Channel channel;
         private readonly Service results;
 
-        public ResultImpactFactorExample(Channel channel)
-        {
+        public ResultImpactFactorExample(Channel channel) {
             this.channel = channel;
             this.results = new Service(channel);
         }
 
-        public string Description()
-        {
-            return "Calling GetImpactFactors: get the applied impact factors of a result";
+        public string Description() {
+            return "Get the applied impact factors of a result";
         }
 
-        public void Run()
-        {
+        public void Run() {
             Exec().Wait();
         }
 
-        private async Task<bool> Exec()
-        {
+        private async Task<bool> Exec() {
             var result = await Examples.CalculateSomeProcessResult(channel);
             if (result == null)
                 return false;
@@ -43,14 +42,12 @@ namespace DemoApp
                 return false;
 
             // collect the factors from the result
-            var factors = results.GetImpactFactors(new ImpactFactorRequest
-            {
+            var factors = results.GetImpactFactors(new ImpactFactorRequest {
                 Result = result,
                 Indicator = impact
             }).ResponseStream;
             var nonZeros = new List<ImpactFactorResponse>();
-            while (await factors.MoveNext())
-            {
+            while (await factors.MoveNext()) {
                 var factor = factors.Current;
                 if (factor.Value == 0 || factor.Flow == null)
                     continue;
@@ -60,8 +57,7 @@ namespace DemoApp
 
             // print the first ten factors
             int i = 0;
-            foreach (var factor in nonZeros)
-            {
+            foreach (var factor in nonZeros) {
                 i++;
                 if (i > 10)
                     break;
@@ -69,14 +65,12 @@ namespace DemoApp
                 var name = flow.Name;
                 var unit = $"{impact.RefUnit} / {flow.RefUnit}";
                 var category = "/";
-                if (flow.CategoryPath != null)
-                {
+                if (flow.CategoryPath != null) {
                     category = flow.CategoryPath.Join("/");
                 }
                 Log($"  .. {name} ({category}): {factor.Value} {unit}");
             }
-            if (i < nonZeros.Count)
-            {
+            if (i < nonZeros.Count) {
                 Log($"  .. {nonZeros.Count - i} more");
             }
 
@@ -84,18 +78,15 @@ namespace DemoApp
             return true;
         }
 
-        private async Task<Ref> SelectImpact(Result result)
-        {
+        private async Task<Ref> SelectImpact(Result result) {
             Log("  .. select an impact category from the result");
             var impacts = results.GetImpactCategories(result).ResponseStream;
             var collected = new List<Ref>();
-            while (await impacts.MoveNext())
-            {
+            while (await impacts.MoveNext()) {
                 collected.Add(impacts.Current);
             }
 
-            if (collected.Count == 0)
-            {
+            if (collected.Count == 0) {
                 Log("  .. => no impact category found in result");
                 return null;
             }

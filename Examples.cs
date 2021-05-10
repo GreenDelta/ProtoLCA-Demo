@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 using Grpc.Core;
@@ -14,9 +12,15 @@ using FlowMapService = ProtoLCA.Services.FlowMapService.FlowMapServiceClient;
 
 
 namespace DemoApp {
+
+    /// <summary>
+    /// This class contains some common utility methods for the examples.
+    /// </summary>
     public static class Examples {
 
-        // Selects a random descriptor of the given type from the database.
+        /// <summary>
+        /// Selects a random descriptor of the given type from the channel.
+        /// </summary>
         public static async Task<Ref> GetSomeDescriptorOf(
             Channel channel, ModelType type) {
             Log($"  .. fetch all descriptors of type {type}");
@@ -40,6 +44,10 @@ namespace DemoApp {
             return selected;
         }
 
+        /// <summary>
+        /// Tries to load the example flow map from the channel. Creates a new
+        /// one (but does not save it) when that mapping does not exist yet.
+        /// </summary>
         public static async Task<FlowMap> GetExampleFlowMap(Channel channel) {
             var service = new FlowMapService(channel);
             var name = "ProtoLCA-Example-Mapping.csv";
@@ -60,7 +68,12 @@ namespace DemoApp {
             return map;
         }
 
-        // Tries to calculate the result of some process in the database.
+        /// <summary>
+        /// Tries to calculate the result of some random process in the
+        /// database. Returns null if there are no processes available. Impact
+        /// assessment results are also calculated for some random impact
+        /// assessment method if such methods are available.
+        /// </summary>
         public static async Task<Result> CalculateSomeProcessResult(
             Channel channel) {
             var process = await GetSomeDescriptorOf(channel, ModelType.Process);

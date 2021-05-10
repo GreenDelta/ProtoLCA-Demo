@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Grpc.Core;
@@ -11,6 +8,10 @@ using static DemoApp.Util;
 using Service = ProtoLCA.Services.DataFetchService.DataFetchServiceClient;
 
 namespace DemoApp {
+
+    /// <summary>
+    /// This example shows how to search for something.
+    /// </summary>
     class FlowSearchExample : Example {
 
         private readonly Service service;
@@ -20,7 +21,7 @@ namespace DemoApp {
         }
 
         public string Description() {
-            return "Calling Search: search for flows with a `carbon dio` query";
+            return "Search for a flow";
         }
 
         public void Run() {
