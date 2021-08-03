@@ -208,6 +208,7 @@ namespace DemoApp {
             };
             flow.FlowProperties.Add(new FlowPropertyFactor {
                 ReferenceFlowProperty = true,
+                ConversionFactor = 1.0,
                 FlowProperty = new Ref {
                     EntityType = EntityType.FlowProperty,
                     Id = flowProperty.Id,
