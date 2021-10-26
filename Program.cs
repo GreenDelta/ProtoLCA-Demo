@@ -12,6 +12,7 @@ namespace DemoApp {
         static void Main() {
             var chan = new Channel("localhost:8080", ChannelCredentials.Insecure);
             var examples = new Example[] {
+                new AboutExample(chan),
                 new CategoryTreeExample(chan),
                 new CategoryContentExample(chan),
                 new GetAllExample(chan),

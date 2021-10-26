@@ -71,6 +71,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AboutExample.cs" />
     <Compile Include="CategoryContentExample.cs" />
     <Compile Include="CategoryTreeExample.cs" />
     <Compile Include="ContributionResultExample.cs" />
