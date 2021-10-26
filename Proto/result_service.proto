@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package protolca.services;
 
-option java_package = "org.openlca.proto.generated.results";
+option java_package = "org.openlca.proto.grpc";
 option java_multiple_files = true;
 option java_outer_classname = "ResultServiceProto";
 
@@ -11,28 +11,28 @@ option go_package = ".;protolca";
 
 import "google/protobuf/empty.proto";
 import "olca.proto";
-import "result_types.proto";
+import "commons.proto";
 
 service ResultService {
 
   // Calculates a result for the given calculation setup.
-  rpc Calculate(CalculationSetup) returns (Result);
+  rpc Calculate(ProtoCalculationSetup) returns (ProtoResultRef);
 
   // Get all technosphere flows of the underlying product system of the given
   // result.
-  rpc GetTechFlows(Result) returns (stream TechFlow);
+  rpc GetTechFlows(ProtoResultRef) returns (stream ProtoTechFlow);
 
   // Get the environmental flows of the given result.
-  rpc GetEnviFlows(Result) returns (stream EnviFlow);
+  rpc GetEnviFlows(ProtoResultRef) returns (stream ProtoEnviFlow);
 
   // Get the impact categories of the given result.
-  rpc GetImpactCategories(Result) returns (stream Ref);
+  rpc GetImpactCategories(ProtoResultRef) returns (stream ProtoRef);
 
   // Get the inventory of the given result.
-  rpc GetTotalInventory(Result) returns (stream ResultValue);
+  rpc GetTotalInventory(ProtoResultRef) returns (stream ResultValue);
 
   // Get the total impact assessment result of the given result.
-  rpc GetTotalImpacts(Result) returns (stream ResultValue);
+  rpc GetTotalImpacts(ProtoResultRef) returns (stream ResultValue);
 
   // Get the direct contribution of a TechFlow to a flow, impact, or cost
   // result. 'Direct' means that this is only the contribution that is
@@ -57,39 +57,49 @@ service ResultService {
       (stream ImpactFactorResponse);
 
   // Disposes the given result on the server side.
-  rpc Dispose(Result) returns (google.protobuf.Empty);
+  rpc Dispose(ProtoResultRef) returns (google.protobuf.Empty);
 
 }
 
-// A `Result` message is basically just a reference to a real result on the
-// server side. As result data can be really large, we do not add them directly
-// to the result. Instead you call the respective methods of the result service
-// to get them. Because of this, you need to explicitly call `Dispose` when you
-// do not need a result anymore. Otherwise you will create memory leaks as the
-// result still exists on the server side.
-message Result {
+// A `ProtoResultRef` message is just a reference to a real result on the server
+// side. As result data can be really large, we do not add them directly to the
+// result. Instead you call the respective methods of the result service to get
+// them. Because of this, you need to explicitly call `Dispose` when you do not
+// need a result anymore. Otherwise you will create memory leaks as the result
+// still exists on the server side.
+message ProtoResultRef {
   string id = 1 [json_name = "@id"];
 }
 
 message ImpactFactorRequest {
-  Result result = 1;
-  Ref indicator = 2;
-  EnviFlow flow = 3;
+  ProtoResultRef result = 1;
+  ProtoRef indicator = 2;
+  ProtoEnviFlow flow = 3;
 }
 
 message ImpactFactorResponse {
-  Ref indicator = 1;
-  EnviFlow flow = 2;
+  ProtoRef indicator = 1;
+  ProtoEnviFlow flow = 2;
   double value = 3;
 }
 
 // The request for a contribution result of a tech-flow.
 message TechFlowContributionRequest {
-  Result result = 1;
-  TechFlow tech_flow = 2;
+  ProtoResultRef result = 1;
+  ProtoTechFlow tech_flow = 2;
   oneof result_ref {
-    EnviFlow envi_flow = 3;
-    Ref impact = 4;
+    ProtoEnviFlow envi_flow = 3;
+    ProtoRef impact = 4;
+    bool costs = 5;
+  }
+}
+
+message ResultValue {
+  double value = 1;
+  oneof result_reference {
+    ProtoTechFlow tech_flow = 2;
+    ProtoEnviFlow envi_flow = 3;
+    ProtoRef impact = 4;
     bool costs = 5;
   }
 }

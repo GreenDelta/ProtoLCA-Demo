@@ -95,14 +95,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Protobuf Include="Proto\about_service.proto" GrpcServices="Client" ProtoRoot="Proto\" />
     <Protobuf Include="Proto\commons.proto" GrpcServices="Client" ProtoRoot="Proto\" />
-    <Protobuf Include="Proto\data_fetch.proto" GrpcServices="Client" ProtoRoot="Proto\" />
-    <Protobuf Include="Proto\data_update.proto" GrpcServices="Client" ProtoRoot="Proto\" />
-    <Protobuf Include="Proto\entity_type.proto" GrpcServices="Client" ProtoRoot="Proto\" />
-    <Protobuf Include="Proto\mappings.proto" GrpcServices="Client" ProtoRoot="Proto\" />
+    <Protobuf Include="Proto\data_fetch_service.proto" GrpcServices="Client" ProtoRoot="Proto\" />
+    <Protobuf Include="Proto\data_update_service.proto" GrpcServices="Client" ProtoRoot="Proto\" />
+    <Protobuf Include="Proto\flow_map_service.proto" GrpcServices="Client" ProtoRoot="Proto\" />
     <Protobuf Include="Proto\olca.proto" GrpcServices="Client" ProtoRoot="Proto\" />
-    <Protobuf Include="Proto\results.proto" GrpcServices="Client" ProtoRoot="Proto\" />
-    <Protobuf Include="Proto\result_types.proto" GrpcServices="Client" ProtoRoot="Proto\" />
+    <Protobuf Include="Proto\result_service.proto" GrpcServices="Client" ProtoRoot="Proto\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="packages\Grpc.Core.2.34.1\build\net45\Grpc.Core.targets" Condition="Exists('packages\Grpc.Core.2.34.1\build\net45\Grpc.Core.targets')" />

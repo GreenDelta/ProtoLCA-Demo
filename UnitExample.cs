@@ -40,9 +40,9 @@ namespace DemoApp {
             }
         }
 
-        private List<UnitGroup> UnitGroupsOf(
-            List<(Unit, UnitGroup, FlowProperty)> triples) {
-            var groups = new List<UnitGroup>();
+        private List<ProtoUnitGroup> UnitGroupsOf(
+            List<(ProtoUnit, ProtoUnitGroup, ProtoFlowProperty)> triples) {
+            var groups = new List<ProtoUnitGroup>();
             var handled = new HashSet<string>();
             foreach (var (_, group, _) in triples) {
                 if (handled.Contains(group.Id))
@@ -54,8 +54,8 @@ namespace DemoApp {
             return groups;
         }
 
-        private FlowProperty DefaultPropertyOf(UnitGroup group,
-            List<(Unit, UnitGroup, FlowProperty)> triples) {
+        private ProtoFlowProperty DefaultPropertyOf(ProtoUnitGroup group,
+            List<(ProtoUnit, ProtoUnitGroup, ProtoFlowProperty)> triples) {
             foreach (var (_, otherGroup, property) in triples) {
                 if (String.Equals(group.Id, otherGroup.Id))
                     return property;
@@ -63,9 +63,9 @@ namespace DemoApp {
             return null;
         }
 
-        private List<Unit> UnitsOf(UnitGroup group,
-            List<(Unit, UnitGroup, FlowProperty)> triples) {
-            var units = new List<Unit>();
+        private List<ProtoUnit> UnitsOf(ProtoUnitGroup group,
+            List<(ProtoUnit, ProtoUnitGroup, ProtoFlowProperty)> triples) {
+            var units = new List<ProtoUnit>();
             foreach (var (unit, otherGroup, _) in triples) {
                 if (String.Equals(group.Id, otherGroup.Id)) {
                     units.Add(unit);

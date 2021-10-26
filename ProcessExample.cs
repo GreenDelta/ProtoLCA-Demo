@@ -24,7 +24,7 @@ namespace DemoApp {
         private readonly Channel channel;
         private readonly DataFetchService fetchService;
         private readonly DataUpdateService updateService;
-        private List<(Unit, UnitGroup, FlowProperty)> unitTriples;
+        private List<(ProtoUnit, ProtoUnitGroup, ProtoFlowProperty)> unitTriples;
 
         public ProcessExample(Channel channel) {
             this.channel = channel;
@@ -47,12 +47,12 @@ namespace DemoApp {
             var mapping = await Examples.GetExampleFlowMap(channel);
 
             // the inputs and outputs of our example
-            var p = FlowType.ProductFlow;
-            var w = FlowType.WasteFlow;
-            var e = FlowType.ElementaryFlow;
+            var p = ProtoFlowType.ProductFlow;
+            var w = ProtoFlowType.WasteFlow;
+            var e = ProtoFlowType.ElementaryFlow;
             var i = true; // is input
             var o = false; // is output
-            var ioList = new List<(bool, FlowType, string, string, double, string)> {
+            var ioList = new List<(bool, ProtoFlowType, string, string, double, string)> {
                 (i, p, "Air Blast", "", 245.8751543969349, "t"),
                 (i, w, "Combustion Air", "", 59.764430236449158, "t"),
                 (i, p, "Hematite Pellets", "", 200, "t"),
@@ -76,10 +76,10 @@ namespace DemoApp {
 
             var process = InitProcess();
             foreach (var (isInput, type, name, category, amount, unit) in ioList) {
-                var exchange = new Exchange {
+                var exchange = new ProtoExchange {
                     InternalId = process.Exchanges.Count + 1,
                     Input = isInput,
-                    QuantitativeReference = !isInput && type == FlowType.ProductFlow,
+                    QuantitativeReference = !isInput && type == ProtoFlowType.ProductFlow,
                 };
 
                 var flowId = $"{type}/{name}/{unit}/{category}";
@@ -93,24 +93,23 @@ namespace DemoApp {
                     exchange.Amount = mapEntry.ConversionFactor * amount;
 
                     if (mapEntry.To.Provider != null
-                        && ((isInput && type == FlowType.ProductFlow)
-                        || (!isInput && type == FlowType.WasteFlow))) {
+                        && ((isInput && type == ProtoFlowType.ProductFlow)
+                        || (!isInput && type == ProtoFlowType.WasteFlow))) {
                         exchange.DefaultProvider = mapEntry.To.Provider;
                     }
                 } else {
 
-                    var (flowRef, unitObj, propObj) = GetOrCreateFlow(
-                        type, name, unit);
+                    var (flowRef, unitObj, propObj) = GetOrCreateFlow(type, name, unit);
                     if (flowRef == null)
                         continue;
                     exchange.Flow = flowRef;
-                    exchange.FlowProperty = new Ref {
-                        EntityType = EntityType.FlowProperty,
+                    exchange.FlowProperty = new ProtoRef {
+                        Type = ProtoType.FlowProperty,
                         Id = propObj.Id,
                         Name = propObj.Name,
                     };
-                    exchange.Unit = new Ref {
-                        EntityType = EntityType.Unit,
+                    exchange.Unit = new ProtoRef {
+                        Type = ProtoType.Unit,
                         Id = unitObj.Id,
                         Name = unitObj.Name,
                     };
@@ -122,25 +121,25 @@ namespace DemoApp {
                 }
             }
 
-            var processRef = updateService.Put(new DataSet { Process = process });
+            var processRef = updateService.Put(new ProtoDataSet { Process = process });
             Log($"  .. created process {processRef.Name}");
             return true;
         }
 
-        private Process InitProcess() {
+        private ProtoProcess InitProcess() {
             var timeStamp = DateTime.UtcNow.ToString(
                 "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
-            return new Process {
-                EntityType = EntityType.Process,
+            return new ProtoProcess {
+                Type = ProtoType.Process,
                 Id = Guid.NewGuid().ToString(),
                 Name = "Proto-Example " + timeStamp,
                 Version = "00.00.001",
                 LastChange = timeStamp,
-                ProcessType = ProcessType.UnitProcess,
+                ProcessType = ProtoProcessType.UnitProcess,
             };
         }
 
-        private FlowMapEntry FindMapEntry(string flowId, FlowMap mapping) {
+        private ProtoFlowMapEntry FindMapEntry(string flowId, ProtoFlowMap mapping) {
             if (mapping.Mappings == null)
                 return null;
             foreach (var entry in mapping.Mappings) {
@@ -160,12 +159,12 @@ namespace DemoApp {
         /// just an example. Typically you would also include the flow category
         /// and maybe other attributes.
         /// </summary>
-        private (Ref, Unit, FlowProperty) GetOrCreateFlow(
-            FlowType type, String name, String unitName) {
+        private (ProtoRef, ProtoUnit, ProtoFlowProperty) GetOrCreateFlow(
+            ProtoFlowType type, String name, String unitName) {
 
             // find the unit and flow property
-            FlowProperty flowProperty = null;
-            Unit unit = null;
+            ProtoFlowProperty flowProperty = null;
+            ProtoUnit unit = null;
             foreach (var (tUnit, _, tProperty) in unitTriples) {
                 if (string.Equals(unitName, tUnit.Name)) {
                     flowProperty = tProperty;
@@ -186,12 +185,12 @@ namespace DemoApp {
                     $"{type}/{name}/{unit.Id}{flowProperty.Id}"));
             var id = new Guid(bytes).ToString();
             var ds = fetchService.Find(new FindRequest {
-                ModelType = ModelType.Flow,
+                Type = ProtoType.Flow,
                 Id = id,
             });
             if (ds.Flow != null) {
-                var existing = new Ref {
-                    EntityType = EntityType.Flow,
+                var existing = new ProtoRef {
+                    Type = ProtoType.Flow,
                     Id = ds.Flow.Id,
                     Name = ds.Flow.Name,
                 };
@@ -199,23 +198,23 @@ namespace DemoApp {
             }
 
             // create a new flow
-            var flow = new Flow {
-                EntityType = EntityType.Flow,
+            var flow = new ProtoFlow {
+                Type = ProtoType.Flow,
                 Id = id,
                 Name = name,
                 Version = "00.00.001",
                 FlowType = type
             };
-            flow.FlowProperties.Add(new FlowPropertyFactor {
+            flow.FlowProperties.Add(new ProtoFlowPropertyFactor {
                 ReferenceFlowProperty = true,
                 ConversionFactor = 1.0,
-                FlowProperty = new Ref {
-                    EntityType = EntityType.FlowProperty,
+                FlowProperty = new ProtoRef {
+                    Type = ProtoType.FlowProperty,
                     Id = flowProperty.Id,
                     Name = flowProperty.Name,
                 },
             });
-            var flowRef = updateService.Put(new DataSet { Flow = flow });
+            var flowRef = updateService.Put(new ProtoDataSet { Flow = flow });
             Log($"  .. created new flow {flowRef.Name}");
             return (flowRef, unit, flowProperty);
         }

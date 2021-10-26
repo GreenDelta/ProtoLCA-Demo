@@ -65,10 +65,10 @@ namespace DemoApp {
             return true;
         }
 
-        private async Task<TechFlow> SelectTechFlow(Result result) {
+        private async Task<ProtoTechFlow> SelectTechFlow(ProtoResultRef result) {
             Log("  .. select a tech-flow from the supply chain");
             var techFlows = results.GetTechFlows(result).ResponseStream;
-            var collected = new List<TechFlow>();
+            var collected = new List<ProtoTechFlow>();
             while (await techFlows.MoveNext()) {
                 collected.Add(techFlows.Current);
             }
@@ -85,10 +85,10 @@ namespace DemoApp {
             return selected;
         }
 
-        private async Task<Ref> SelectImpact(Result result) {
+        private async Task<ProtoRef> SelectImpact(ProtoResultRef result) {
             Log("  .. select an impact category from the result");
             var impacts = results.GetImpactCategories(result).ResponseStream;
-            var collected = new List<Ref>();
+            var collected = new List<ProtoRef>();
             while (await impacts.MoveNext()) {
                 collected.Add(impacts.Current);
             }

@@ -38,10 +38,10 @@ namespace DemoApp {
             mapping.Mappings.Clear();
 
             // define the flows for which we want to create mappings
-            var p = FlowType.ProductFlow;
-            var w = FlowType.WasteFlow;
-            var e = FlowType.ElementaryFlow;
-            var flowList = new List<(FlowType, string, string, string)> {
+            var p = ProtoFlowType.ProductFlow;
+            var w = ProtoFlowType.WasteFlow;
+            var e = ProtoFlowType.ElementaryFlow;
+            var flowList = new List<(ProtoFlowType, string, string, string)> {
                 (p, "Air Blast", "t", ""),
                 (w, "Combustion Air", "t", ""),
                 (p, "Hematite Pellets", "t", ""),
@@ -70,23 +70,23 @@ namespace DemoApp {
                 if (flow == null)
                     continue;
                 count++;
-                var mapEntry = new FlowMapEntry {
-                    From = new FlowMapRef {
-                        Flow = new Ref {
+                var mapEntry = new ProtoFlowMapEntry {
+                    From = new ProtoFlowMapRef {
+                        Flow = new ProtoRef {
                             Id = $"{type}/{name}/{unit}/{category}",
                             Name = name,
                             RefUnit = unit,
                         },
-                        Unit = new Ref { Name = unit }
+                        Unit = new ProtoRef { Name = unit }
                     },
-                    To = new FlowMapRef {
+                    To = new ProtoFlowMapRef {
                         Flow = flow,
-                        Unit = new Ref { Name = refUnit },
+                        Unit = new ProtoRef { Name = refUnit },
                     },
                     ConversionFactor = factor
                 };
                 mapping.Mappings.Add(mapEntry);
-                if (type != FlowType.ElementaryFlow) {
+                if (type != ProtoFlowType.ElementaryFlow) {
                     var provider = await FindProvider(flow);
                     if (provider != null) {
                         mapEntry.To.Provider = provider;
@@ -107,7 +107,7 @@ namespace DemoApp {
             }
         }
 
-        private async Task<Ref> FindProvider(Ref flow) {
+        private async Task<ProtoRef> FindProvider(ProtoRef flow) {
             Log($"  .. search providers for {flow.Name}");
             var providers = dataService.GetProvidersFor(flow).ResponseStream;
             if (await providers.MoveNext()) {

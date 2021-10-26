@@ -35,9 +35,9 @@ namespace DemoApp {
 
             // get all flow descriptors
             var response = service.GetDescriptors(new GetDescriptorsRequest {
-                ModelType = ModelType.Flow,
+                Type = ProtoType.Flow,
             }).ResponseStream;
-            var flows = new List<Ref>();
+            var flows = new List<ProtoRef>();
             while (await response.MoveNext()) {
                 flows.Add(response.Current);
             }

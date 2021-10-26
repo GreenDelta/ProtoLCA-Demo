@@ -23,7 +23,7 @@ namespace DemoApp {
         public void Run() {
             var service = new DataFetchService.DataFetchServiceClient(channel);
             var tree = service.GetCategoryTree(new GetCategoryTreeRequest {
-                ModelType = ModelType.Flow
+                Type = ProtoType.Flow
             });
             PrintTree(tree, 0);
 

@@ -78,10 +78,10 @@ namespace DemoApp {
             return true;
         }
 
-        private async Task<Ref> SelectImpact(Result result) {
+        private async Task<ProtoRef> SelectImpact(ProtoResultRef result) {
             Log("  .. select an impact category from the result");
             var impacts = results.GetImpactCategories(result).ResponseStream;
-            var collected = new List<Ref>();
+            var collected = new List<ProtoRef>();
             while (await impacts.MoveNext()) {
                 collected.Add(impacts.Current);
             }

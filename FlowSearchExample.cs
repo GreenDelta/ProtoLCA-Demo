@@ -31,10 +31,10 @@ namespace DemoApp {
         private async Task<bool> Exec() {
             Log("  .. search flows for 'carbon dio'");
             var response = service.Search(new SearchRequest {
-                ModelType = ModelType.Flow,
+                Type = ProtoType.Flow,
                 Query = "carbon dio",
             }).ResponseStream;
-            var flows = new List<Ref>();
+            var flows = new List<ProtoRef>();
             while (await response.MoveNext()) {
                 flows.Add(response.Current);
             }

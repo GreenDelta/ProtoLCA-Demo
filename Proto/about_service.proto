@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package protolca.services;
+
+option csharp_namespace = "ProtoLCA.Services";
+option go_package = ".;protolca";
+option java_package = "org.openlca.proto.grpc";
+option java_multiple_files = true;
+option java_outer_classname = "AboutServiceProto";
+
+import "google/protobuf/empty.proto";
+
+// This service gives some general information of the service
+// interface.
+service AboutService {
+
+  rpc About(google.protobuf.Empty) returns (AboutResponse);
+
+}
+
+message AboutResponse {
+
+  // The name of the database to which the service is connected.
+  string database = 1;
+
+  // The version of the service interface.
+  int32 version = 2;
+
+  // The minimum service version to which this service is backwards
+  // compatible (means that all versions from this version to the
+  // the current version of this service are supported).
+  int32 min_supported_version = 3;
+}

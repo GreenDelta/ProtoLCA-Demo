@@ -23,7 +23,7 @@ namespace DemoApp {
 
         public void Run() {
             var response = service.GetAll(new GetAllRequest {
-                ModelType = ModelType.ImpactMethod,
+                Type = ProtoType.ImpactMethod,
                 SkipPaging = true
             });
             foreach (var ds in response.DataSet) {

@@ -21,15 +21,15 @@ namespace DemoApp {
         /// <summary>
         /// Selects a random descriptor of the given type from the channel.
         /// </summary>
-        public static async Task<Ref> GetSomeDescriptorOf(
-            Channel channel, ModelType type) {
+        public static async Task<ProtoRef> GetSomeDescriptorOf(
+            Channel channel, ProtoType type) {
             Log($"  .. fetch all descriptors of type {type}");
             var service = new DataService(channel);
             var descriptors = service.GetDescriptors(new GetDescriptorsRequest {
-                ModelType = type
+                Type = type
             }).ResponseStream;
 
-            var collected = new List<Ref>();
+            var collected = new List<ProtoRef>();
             while (await descriptors.MoveNext()) {
                 collected.Add(descriptors.Current);
             }
@@ -48,7 +48,7 @@ namespace DemoApp {
         /// Tries to load the example flow map from the channel. Creates a new
         /// one (but does not save it) when that mapping does not exist yet.
         /// </summary>
-        public static async Task<FlowMap> GetExampleFlowMap(Channel channel) {
+        public static async Task<ProtoFlowMap> GetExampleFlowMap(Channel channel) {
             var service = new FlowMapService(channel);
             var name = "ProtoLCA-Example-Mapping.csv";
             Log($"  .. try to find example flow map '{name}'");
@@ -61,7 +61,7 @@ namespace DemoApp {
                 }
             }
             Log("  .. does not exist; initialized new");
-            var map = new FlowMap {
+            var map = new ProtoFlowMap {
                 Name = name,
                 Id = Guid.NewGuid().ToString()
             };
@@ -74,23 +74,22 @@ namespace DemoApp {
         /// assessment results are also calculated for some random impact
         /// assessment method if such methods are available.
         /// </summary>
-        public static async Task<Result> CalculateSomeProcessResult(
+        public static async Task<ProtoResultRef> CalculateSomeProcessResult(
             Channel channel) {
-            var process = await GetSomeDescriptorOf(channel, ModelType.Process);
+            var process = await GetSomeDescriptorOf(channel, ProtoType.Process);
             if (process == null) {
                 Log("=> database has no processes; cannot calculate result");
                 return null;
             }
             Log($"  .. try to calculate result of process {process.Name}");
 
-            var method = await GetSomeDescriptorOf(
-                channel, ModelType.ImpactMethod);
+            var method = await GetSomeDescriptorOf(channel, ProtoType.ImpactMethod);
             if (method != null) {
                 Log($"  .. calculate results with LCIA method {method.Name}");
             } else {
                 Log("  .. calculate results without LCIA method");
             }
-            var setup = new CalculationSetup {
+            var setup = new ProtoCalculationSetup {
                 ProductSystem = process,
                 ImpactMethod = method,
                 // calculate it for 1 unit of the reference flow
@@ -117,15 +116,15 @@ namespace DemoApp {
         /// <returns>
         /// a matching flow or null if no such flow could be found
         /// </returns>
-        public static async Task<Ref> FindFlow(Channel channel, FlowType type,
+        public static async Task<ProtoRef> FindFlow(Channel channel, ProtoFlowType type,
             string name, string unit, string category = "") {
             Log($"  .. search flow {type}; {name}; {unit}");
             var service = new DataService(channel);
             var flows = service.Search(new SearchRequest {
-                ModelType = ModelType.Flow,
+                Type = ProtoType.Flow,
                 Query = name
             }).ResponseStream;
-            Ref match = null;
+            ProtoRef match = null;
             while (await flows.MoveNext()) {
                 var candidate = flows.Current;
                 if (candidate.FlowType != type)
@@ -168,15 +167,15 @@ namespace DemoApp {
         /// that you link a flow amount to a flow property (e.g. dry volume) and
         /// a unit (e.g. m3).
         /// </summary>
-        public static List<(Unit, UnitGroup, FlowProperty)> GetUnitTriples(
+        public static List<(ProtoUnit, ProtoUnitGroup, ProtoFlowProperty)> GetUnitTriples(
             Channel channel) {
             Log("  .. load unit, unit group, flow property triples");
             var service = new DataService(channel);
 
             // collect all flow properties
-            var flowProperties = new List<FlowProperty>();
+            var flowProperties = new List<ProtoFlowProperty>();
             var propResponse = service.GetAll(new GetAllRequest {
-                ModelType = ModelType.FlowProperty,
+                Type = ProtoType.FlowProperty,
                 SkipPaging = true,
             });
             foreach (var ds in propResponse.DataSet) {
@@ -186,9 +185,9 @@ namespace DemoApp {
             }
 
             // collect the triples
-            var triples = new List<(Unit, UnitGroup, FlowProperty)>();
+            var triples = new List<(ProtoUnit, ProtoUnitGroup, ProtoFlowProperty)>();
             var groupResponse = service.GetAll(new GetAllRequest {
-                ModelType = ModelType.UnitGroup,
+                Type = ProtoType.UnitGroup,
                 SkipPaging = true,
             });
             foreach (var ds in groupResponse.DataSet) {
@@ -196,7 +195,7 @@ namespace DemoApp {
                 if (group == null)
                     continue;
                 // find the matching flow property of that unit group
-                FlowProperty property = null;
+                ProtoFlowProperty property = null;
                 var defaultPropId = group.DefaultFlowProperty?.Id;
                 foreach (var candidate in flowProperties) {
                     if (defaultPropId != null

@@ -8,12 +8,12 @@ for %%G in (%script_home%\*.proto) do (
     del %%G
 )
 
-set mods_proto= %script_home%..\..\olca-modules\olca-proto\src\main\proto
+set mods_proto= %script_home%..\..\olca-proto\proto
 if exist %mods_proto% (
     xcopy /y %mods_proto% %script_home%
 )
 
-echo add the following includes:
-for %%G in (*.proto) do (
+echo add the following includes to the csproj file:
+for %%G in (%script_home%\*.proto) do (
     echo     ^<Protobuf Include="Proto\%%G" GrpcServices="Client" ProtoRoot="Proto\" /^>
 )

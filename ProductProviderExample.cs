@@ -35,7 +35,7 @@ namespace DemoApp {
             // first, we fetch the descriptors of all flows in the database
             Log("  .. get all flow descriptors");
             var descriptors = service.GetDescriptors(new GetDescriptorsRequest {
-                ModelType = ModelType.Flow
+                Type = ProtoType.Flow
             }).ResponseStream;
 
             // now we search for product flows and providers of them
@@ -51,7 +51,7 @@ namespace DemoApp {
 
                 // check if it is a product flow
                 var productRef = descriptors.Current;
-                if (productRef.FlowType != FlowType.ProductFlow)
+                if (productRef.FlowType != ProtoFlowType.ProductFlow)
                     continue;
                 trials++;
 

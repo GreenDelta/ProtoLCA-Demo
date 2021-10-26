@@ -28,7 +28,7 @@ namespace DemoApp {
 
         public void Run() {
             var tree = service.GetCategoryTree(new GetCategoryTreeRequest {
-                ModelType = ModelType.Flow
+                Type = ProtoType.Flow
             });
             PrintContent(tree, 0).Wait();
         }
@@ -41,10 +41,10 @@ namespace DemoApp {
 
             // get and print the content
             var content = service.GetCategoryContent(new GetCategoryContentRequest {
-                ModelType = ModelType.Flow,
+                Type = ProtoType.Flow,
                 Category = tree.Id
             }).ResponseStream;
-            var elements = new List<Ref>();
+            var elements = new List<ProtoRef>();
             while (await content.MoveNext()) {
                 elements.Add(content.Current);
             }

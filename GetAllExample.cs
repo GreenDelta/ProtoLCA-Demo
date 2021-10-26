@@ -27,7 +27,7 @@ namespace DemoApp {
             // first page of flows
             Log("  .. get the first page of all flows");
             var flows = service.GetAll(new GetAllRequest {
-                ModelType = ModelType.Flow,
+                Type = ProtoType.Flow,
             });
             Log($"  .. loaded first {flows.PageSize} of {flows.TotalCount} flows");
             int i = 0;
@@ -42,12 +42,12 @@ namespace DemoApp {
             // all unit groups
             Log("\n  .. get all unit groups from the database");
             var groups = service.GetAll(new GetAllRequest {
-                ModelType = ModelType.UnitGroup,
+                Type = ProtoType.UnitGroup,
                 SkipPaging = true
             });
             foreach (var dataSet in groups.DataSet) {
                 var unitGroup = dataSet.UnitGroup;
-                Unit refUnit = null;
+                ProtoUnit refUnit = null;
                 foreach (var unit in unitGroup.Units) {
                     if (unit.ReferenceUnit) {
                         refUnit = unit;
