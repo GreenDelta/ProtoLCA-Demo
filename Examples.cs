@@ -90,7 +90,7 @@ namespace DemoApp {
                 Log("  .. calculate results without LCIA method");
             }
             var setup = new ProtoCalculationSetup {
-                ProductSystem = process,
+                Process = process,
                 ImpactMethod = method,
                 // calculate it for 1 unit of the reference flow
                 // of the process
