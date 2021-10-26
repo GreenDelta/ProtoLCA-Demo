@@ -87,6 +87,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResultImpactFactorExample.cs" />
+    <Compile Include="TechProcessExample.cs" />
     <Compile Include="TotalResultExample.cs" />
     <Compile Include="UnitExample.cs" />
     <Compile Include="Util.cs" />

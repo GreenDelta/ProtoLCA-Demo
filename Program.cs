@@ -23,6 +23,7 @@ namespace DemoApp {
                 new UnitExample(chan),
                 new FlowMappingExample(chan),
                 new ProcessExample(chan),
+                new TechProcessExample(chan),
                 new TotalResultExample(chan),
                 new ContributionResultExample(chan),
                 new ResultImpactFactorExample(chan),
