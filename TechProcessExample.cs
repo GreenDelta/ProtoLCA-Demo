@@ -18,7 +18,8 @@ namespace DemoApp {
         }
 
         public string Description() {
-            return "Creates a process from some available products in the database.";
+            return "Creates a process from some available" +
+                " products in the database; then calculates it.";
         }
 
         public void Run() {
@@ -89,6 +90,30 @@ namespace DemoApp {
 
             Log($"  .. insert process {process.Name}");
             update.Put(new ProtoDataSet { Process = process });
+
+            Log($"  .. calculate {process.Name}");
+            var method = await Examples.GetSomeDescriptorOf(
+                channel, ProtoType.ImpactMethod);
+            var setup = new ProtoCalculationSetup {
+                Process = new ProtoRef {
+                    Type = ProtoType.Process,
+                    Id = process.Id,
+                },
+                ImpactMethod = method,
+                Amount = 1.0,
+            };
+            var results = new ResultService.ResultServiceClient(channel);
+            var result = results.Calculate(setup);
+
+            Log($"  .. fetch impact assessment results");
+            var impacts = results.GetTotalImpacts(result).ResponseStream;
+            while (await impacts.MoveNext()) {
+                var impact = impacts.Current;
+                Log($"  .. - {impact.Impact.Name}:" +
+                    $" {impact.Value} {impact.Impact.RefUnit}");
+            }
+
+            results.Dispose(result);
 
             return true;
         }
