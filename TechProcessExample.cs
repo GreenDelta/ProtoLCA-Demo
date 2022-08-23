@@ -68,8 +68,8 @@ namespace DemoApp {
                     ? refFlow.Product
                     : refFlow.Waste,
                 Amount = 1.0,
-                Input = refFlow.Waste != null,
-                QuantitativeReference = true,
+                IsInput = refFlow.Waste != null,
+                IsQuantitativeReference = true,
             };
             process.Exchanges.Add(qRef);
 
@@ -82,8 +82,8 @@ namespace DemoApp {
                         ? nextFlow.Product
                         : nextFlow.Waste,
                     Amount = rand.NextDouble(),
-                    Input = nextFlow.Product != null,
-                    DefaultProvider = nextFlow.Process,
+                    IsInput = nextFlow.Product != null,
+                    DefaultProvider = nextFlow.Provider,
                 };
                 process.Exchanges.Add(exchange);
             }

@@ -47,7 +47,7 @@ namespace DemoApp {
                 return false;
 
             Log("  .. get contributions of "
-                + $"{techFlow.Process.Name} to {impact.Name}");
+                + $"{techFlow.Provider.Name} to {impact.Name}");
 
             var req = new TechFlowContributionRequest {
                 Result = result,
@@ -81,7 +81,7 @@ namespace DemoApp {
             Log($"  .. the system has {collected.Count} tech-flows");
             var idx = new Random().Next(0, collected.Count);
             var selected = collected[idx];
-            Log($"  .. selected {selected.Process.Name}");
+            Log($"  .. selected {selected.Provider.Name}");
             return selected;
         }
 

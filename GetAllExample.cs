@@ -49,7 +49,7 @@ namespace DemoApp {
                 var unitGroup = dataSet.UnitGroup;
                 ProtoUnit refUnit = null;
                 foreach (var unit in unitGroup.Units) {
-                    if (unit.ReferenceUnit) {
+                    if (unit.IsRefUnit) {
                         refUnit = unit;
                         break;
                     }

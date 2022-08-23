@@ -47,9 +47,7 @@ namespace DemoApp {
             int i = 0;
             foreach (var flow in flows) {
                 i++;
-                var category = flow.CategoryPath != null
-                    ? flow.CategoryPath.Join("/")
-                    : "/";
+                var category = flow.Category ?? "/";
                 if (category.Length > 40) {
                     category = category.Substring(0, 37) + "...";
                 }

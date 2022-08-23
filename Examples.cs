@@ -135,9 +135,9 @@ namespace DemoApp {
                     match = candidate;
                     break;
                 }
-                if (candidate.CategoryPath == null)
+                if (candidate.Category == null)
                     continue;
-                var flowCategory = candidate.CategoryPath.Join("/").ToLower();
+                var flowCategory = candidate.Category.ToLower();
                 var terms = category.ToLower().Split('/');
                 var categoryMatches = true;
                 foreach (var term in terms) {

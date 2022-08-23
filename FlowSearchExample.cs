@@ -44,9 +44,7 @@ namespace DemoApp {
                 if (i >= 10)
                     break;
                 i++;
-                var category = flow.CategoryPath != null
-                    ? flow.CategoryPath.Join("/")
-                    : "/";
+                var category = flow.Category ?? "/";
                 Log($"  .. {flow.Name}; {category}");
             }
             if (i < flows.Count) {

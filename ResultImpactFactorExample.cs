@@ -64,10 +64,7 @@ namespace DemoApp {
                 var flow = factor.Flow.Flow;
                 var name = flow.Name;
                 var unit = $"{impact.RefUnit} / {flow.RefUnit}";
-                var category = "/";
-                if (flow.CategoryPath != null) {
-                    category = flow.CategoryPath.Join("/");
-                }
+                var category = flow.Category ?? "/";
                 Log($"  .. {name} ({category}): {factor.Value} {unit}");
             }
             if (i < nonZeros.Count) {

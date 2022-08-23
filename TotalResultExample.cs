@@ -81,12 +81,7 @@ namespace DemoApp {
                 var name = flow.Name;
                 var unit = flow.RefUnit;
                 var amount = r.Value;
-
-                var category = "";
-                if (flow.CategoryPath != null) {
-                    category = flow.CategoryPath.Join("/");
-                }
-
+                var category = flow.Category ?? "/";
                 Log($"  .. {name} ({category}): {amount} {unit}");
             }
             if (i < flowResults.Count) {

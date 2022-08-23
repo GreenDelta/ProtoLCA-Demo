@@ -19,6 +19,7 @@
     * added updates of the latest [openLCA schema](https://github.com/GreenDelta/olca-schema)
     * added `Epd` and `Result` types
     * categories are just string paths now
+    * _is_ prefixes for boolean fields
     * new (stable) field indices
     * use optional annotations for some primitive fields 
     * ... see the olca-schema repo for a full change log

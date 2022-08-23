@@ -78,8 +78,8 @@ namespace DemoApp {
             foreach (var (isInput, type, name, category, amount, unit) in ioList) {
                 var exchange = new ProtoExchange {
                     InternalId = process.Exchanges.Count + 1,
-                    Input = isInput,
-                    QuantitativeReference = !isInput && type == ProtoFlowType.ProductFlow,
+                    IsInput = isInput,
+                    IsQuantitativeReference = !isInput && type == ProtoFlowType.ProductFlow,
                 };
 
                 var flowId = $"{type}/{name}/{unit}/{category}";
@@ -206,7 +206,7 @@ namespace DemoApp {
                 FlowType = type
             };
             flow.FlowProperties.Add(new ProtoFlowPropertyFactor {
-                ReferenceFlowProperty = true,
+                IsRefFlowProperty = true,
                 ConversionFactor = 1.0,
                 FlowProperty = new ProtoRef {
                     Type = ProtoType.FlowProperty,
