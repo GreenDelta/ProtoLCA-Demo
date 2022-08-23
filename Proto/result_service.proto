@@ -61,6 +61,40 @@ service ResultService {
 
 }
 
+// A setup for a product system calculation.
+message ProtoCalculationSetup {
+
+  oneof target {
+    ProtoRef product_system = 1;
+    ProtoRef process = 2;
+  }
+
+  // The LCIA method for the calculation.
+  ProtoRef impact_method = 3;
+
+  // The normalisation and weighting set for the calculation.
+  ProtoRef nw_set = 4;
+
+  // A list of parameter redefinitions that should be used in the calculation.
+  repeated ProtoParameterRedef parameters = 5;
+
+  // The calculation type to be used in the calculation.
+  ProtoAllocationType allocation = 6;
+
+  // Indicates whether life cycle costs should be also calculated.
+  bool with_costs = 7;
+
+  // Indicates whether a regionalized result should be calculated or not.
+  bool with_regionalization = 8;
+
+  ProtoRef unit = 9;
+
+  double amount = 10;
+
+  ProtoRef flow_property = 11;
+
+}
+
 // A `ProtoResultRef` message is just a reference to a real result on the server
 // side. As result data can be really large, we do not add them directly to the
 // result. Instead you call the respective methods of the result service to get

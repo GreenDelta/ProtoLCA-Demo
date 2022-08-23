@@ -16,36 +16,32 @@ option java_multiple_files = true;
 message ProtoActor {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
+  string version = 8;
 
   string address = 10;
 
@@ -69,31 +65,31 @@ message ProtoActor {
 message ProtoAllocationFactor {
 
   // The type of allocation.
-  ProtoAllocationType allocation_type = 1;
+  ProtoAllocationType allocation_type = 2;
 
-  // The output product (or waste input) to which this allocation factor is
-  // related. The must be an exchange with this product output (or waste input)
-  // in this process.
-  ProtoRef product = 2;
-
-  // The value of the allocation factor.
-  double value = 3;
+  // A product input, waste output, or elementary flow exchange which is
+  // allocated by this factor. This is only valid for causal allocation where
+  // allocation factors can be assigned to single exchanges.
+  ProtoExchangeRef exchange = 3;
 
   // An optional formula from which the value of the allocation factor is
   // calculated.
   string formula = 4;
 
-  // A product input, waste output, or elementary flow exchange which is
-  // allocated by this factor. This is only valid for causal allocation where
-  // allocation factors can be assigned to single exchanges.
-  ProtoExchangeRef exchange = 5;
+  // The output product (or waste input) to which this allocation factor is
+  // related. The must be an exchange with this product output (or waste input)
+  // in this process.
+  ProtoRef product = 5;
+
+  // The value of the allocation factor.
+  double value = 6;
 
 }
 
 // An enumeration type for allocation methods. This type is used to define the
-// type of an [AllocationFactor], the default allocation method of a
-// multi-functional [Process], or the allocation method in a
-// [CalculationSetup].
+// type of an `AllocationFactor`, the default allocation method of a
+// multi-functional `Process`, or the allocation method in a
+// `CalculationSetup`.
 enum ProtoAllocationType {
 
   // This default option was added automatically
@@ -112,207 +108,87 @@ enum ProtoAllocationType {
 
 }
 
-// A setup for a product system calculation.
-message ProtoCalculationSetup {
-
-  // The type of calculation that should be performed.
-  ProtoCalculationType calculation_type = 1;
-
-  // The product system that should be calculated.
-  ProtoRef product_system = 2;
-
-  // The process that should be calculated.
-  ProtoRef process = 3;
-
-  // The LCIA method for the calculation.
-  ProtoRef impact_method = 4;
-
-  // The normalisation and weighting set for the calculation.
-  ProtoRef nw_set = 5;
-
-  // A list of parameter redefinitions that should be used in the calculation.
-  repeated ProtoParameterRedef parameters = 6;
-
-  // The calculation type to be used in the calculation.
-  ProtoAllocationType allocation = 7;
-
-  // Indicates whether life cycle costs should be also calculated.
-  bool with_costs = 8;
-
-  // Indicates whether a regionalized result should be calculated or not.
-  bool with_regionalization = 9;
-
-  ProtoRef unit = 10;
-
-  double amount = 11;
-
-  ProtoRef flow_property = 12;
-
-  // This field is only valid when this setup describes a Monte Carlo
-  // simulation and contains the number of simulation runs in that case.
-  int32 number_of_runs = 13;
-
-}
-
-// An enumeration of the different calculation methods supported by openLCA.
-enum ProtoCalculationType {
-
-  // This default option was added automatically
-  // and means that no values was set.
-  UNDEFINED_CALCULATION_TYPE = 0;
-
-  // Calculates the total results for elementary flows, LCIA indicators, costs,
-  // etc. of a product system.
-  SIMPLE_CALCULATION = 1;
-
-  // Includes the total result vectors of a simple calculation but calculates
-  // also the direct contributions of each process (or better process product
-  // in case of multi-output processes) to these total results.
-  CONTRIBUTION_ANALYSIS = 2;
-
-  // Extends the contribution analysis by providing also the upstream results
-  // of each process (process product) in the product system. The upstream
-  // result contains the direct contributions of the respective process but
-  // also the result of the supply chain up to this process scaled to the
-  // demand of the process in the product system.
-  UPSTREAM_ANALYSIS = 3;
-
-  // A Monte Carlo simulation generates for each run, of a given number of a
-  // given number of iterations, random values according to the uncertainty
-  // distributions of process inputs/outputs, parameters, characterization
-  // factors, etc. of a product system and then performs a simple calculation
-  // for that specific run.
-  MONTE_CARLO_SIMULATION = 4;
-
-}
-
-// A category is used for the categorisation of types like processes, flows,
-// etc. The tricky thing is that the `Category` class inherits also from the
-// [CategorizedEntity] type so that a category can have a category attribute
-// which is then the parent category of this category (uff).
-message ProtoCategory {
-
-  // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
-
-  // The name of the entity.
-  string name = 2;
-
-  // The description of the entity.
-  string description = 3;
-
-  // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
-  // fields are optional and the fields may have leading zeros (so 01.00.00 is
-  // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
-
-  // The type of models that can be linked to the category.
-  ProtoCategoryType model_type = 10;
-
-}
-
 message ProtoCurrency {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
+  string version = 8;
 
   string code = 10;
 
   double conversion_factor = 11;
 
-  ProtoRef reference_currency = 12;
+  // The reference currency to which the conversion factor is related.
+  ProtoRef ref_currency = 12;
 
 }
 
-// An indicator of a data quality system ([DQSystem]).
+// An indicator of a data quality system (`DQSystem`).
 message ProtoDQIndicator {
 
-  string name = 1;
+  string name = 2;
 
-  int32 position = 2;
+  int32 position = 3;
 
-  repeated ProtoDQScore scores = 3;
+  repeated ProtoDQScore scores = 4;
 
 }
 
-// An score value of an indicator ([DQIndicator]) in a data quality system
-// ([DQSystem]).
+// An score value of an indicator (`DQIndicator`) in a data quality system
+// (`DQSystem`).
 message ProtoDQScore {
 
-  int32 position = 1;
+  string description = 2;
 
-  string label = 2;
+  string label = 3;
 
-  string description = 3;
+  int32 position = 4;
 
-  double uncertainty = 4;
+  optional double uncertainty = 5;
 
 }
 
-// A data quality system (DQS) in openLCA describes a pedigree matrix of $m$
-// data quality indicators (DQIs) and $n$ data quality scores (DQ scores). Such
+// A data quality system (DQS) in openLCA describes a pedigree matrix of `m`
+// data quality indicators (DQIs) and `n` data quality scores (DQ scores). Such
 // a system can then be used to assess the data quality of processes and
-// exchanges by tagging them with an instance of the system $D$ where $D$ is a
-// $m * n$ matrix with an entry $d_{ij}$ containing the value of the data
-// quality score $j$ for indicator $i$. As each indicator in $D$ can only have
-// a single score value, $D$ can be stored in a vector $d$ where $d_i$ contains
-// the data quality score for indicator $i$. The possible values of the data
-// quality scores are defined as a linear order $1 \dots n$. In openLCA, the
-// data quality entry $d$ of a process or exchange is stored as a string like
+// exchanges by tagging them with an instance of the system `D` where `D` is a
+// `m * n` matrix with an entry `d_ij` containing the value of the data quality
+// score `j` for indicator `i`. As each indicator in `D` can only have a single
+// score value, `D` can be stored in a vector `d` where `d_i` contains the data
+// quality score for indicator `i`. The possible values of the data quality
+// scores are defined as a linear order `1 ... n`. In openLCA, the data quality
+// entry `d` of a process or exchange is stored as a string like
 // `(3;2;4;n.a.;2)` which means the data quality score for the first indicator
 // is `3`, for the second `2` etc. A specific value is `n.a.` which stands for
 // _not applicable_. In calculations, these data quality entries can be
 // aggregated in different ways. For example, the data quality entry of a flow
-// $f$ with a contribution of `0.5 kg` and a data quality entry of
-// `(3;2;4;n.a.;2)` in a process $p$ and a contribution of `1.5 kg` and a data
-// quality entry of `(2;3;1;n.a.;5)` in a process $q$ could be aggregated to
+// `f` with a contribution of `0.5 kg` and a data quality entry of
+// `(3;2;4;n.a.;2)` in a process `p` and a contribution of `1.5 kg` and a data
+// quality entry of `(2;3;1;n.a.;5)` in a process `q` could be aggregated to
 // `(2;3;2;n.a.;4)` by applying an weighted average and rounding. Finally,
 // custom labels like `A, B, C, ...` or `Very good, Good, Fair, ...` for the DQ
 // scores can be assigned by the user. These labels are then displayed instead
@@ -321,36 +197,32 @@ message ProtoDQScore {
 message ProtoDQSystem {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
+  string version = 8;
 
   bool has_uncertainties = 10;
 
@@ -360,70 +232,174 @@ message ProtoDQSystem {
 
 }
 
-// An Exchange is an input or output of a [Flow] in a [Process]. The amount of
-// an exchange is given in a specific unit of a quantity ([FlowProperty]) of
+enum ProtoDirection {
+
+  // This default option was added automatically
+  // and means that no values was set.
+  UNDEFINED_DIRECTION = 0;
+
+  INPUT = 1;
+
+  OUTPUT = 2;
+
+}
+
+// The results and some meta-data of an environmental product declarartion,
+// EPD.
+message ProtoEpd {
+
+  // The reference ID (typically an UUID) of the entity.
+  string id = 2 [json_name = "@id"];
+
+  // The name of the entity.
+  string name = 3;
+
+  // The description of the entity.
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
+
+  // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
+  // fields are optional and the fields may have leading zeros (so 01.00.00 is
+  // the same as 1.0.0 or 1).
+  string version = 8;
+
+  ProtoRef manufacturer = 10;
+
+  // The results of this EPD structured in modules.
+  repeated ProtoEpdModule modules = 11;
+
+  ProtoRef pcr = 12;
+
+  // The declared product of the EPD.
+  ProtoEpdProduct product = 13;
+
+  ProtoRef program_operator = 14;
+
+  // An universal resource name (URN) that identifies where the EPD comes from,
+  // e.g. `openEPD:ec3yznau`.
+  string urn = 15;
+
+  ProtoRef verifier = 16;
+
+}
+
+// The results of an EPD are typically structured in modules.
+message ProtoEpdModule {
+
+  // The name or identifier of the module, like `A1`.
+  string name = 2;
+
+  // Scales the linked result to the required amount for this module.
+  double multiplier = 3;
+
+  // A reference to the module's result. Note that results are stand-alone
+  // entities and that the same result could be referenced from different
+  // modules. Also, results can be directly linked in product systems.
+  ProtoRef result = 4;
+
+}
+
+// The declared product of an EPD.
+message ProtoEpdProduct {
+
+  // The amount of the declared product.
+  double amount = 2;
+
+  // The reference to the product flow.
+  ProtoRef flow = 3;
+
+  // The reference to the flow property (quantity) in which the amount of the
+  // declared product is given for the respective EPD. A missing flow property
+  // reference means that the amount is given in the reference flow property of
+  // the respective product flow.
+  ProtoRef flow_property = 4;
+
+  // The reference to the unit in which the amount of the declared product is
+  // given for the respective EPD. A missing unit reference means that the
+  // amount is given in the reference unit of the respective product flow.
+  ProtoRef unit = 5;
+
+}
+
+// An Exchange is an input or output of a `Flow` in a `Process`. The amount of
+// an exchange is given in a specific unit of a quantity (`FlowProperty`) of
 // the flow. The allowed units and flow properties that can be used for a flow
 // in an exchange are defined by the flow property information in that flow
-// (see also the [FlowPropertyFactor] type).
+// (see also the `FlowPropertyFactor` type).
 message ProtoExchange {
 
-  // Indicates whether this exchange is an avoided product.
-  bool avoided_product = 1;
+  double amount = 2;
+
+  string amount_formula = 3;
+
+  optional double base_uncertainty = 4;
 
   // A formula for calculating the costs of this exchange.
-  string cost_formula = 2;
+  string cost_formula = 5;
 
   // The costs of this exchange.
-  double cost_value = 3;
+  optional double cost_value = 6;
 
   // The currency in which the costs of this exchange are given.
-  ProtoRef currency = 4;
+  ProtoRef currency = 7;
 
-  // The process internal ID of the exchange. This is used to identify
-  // exchanges unambiguously within a process (e.g. when linking exchanges in a
-  // product system where multiple exchanges with the same flow are allowed).
-  // The value should be >= 1.
-  int32 internal_id = 5;
-
-  // The reference to the flow of the exchange.
-  ProtoRef flow = 6;
-
-  // The quantity in which the amount is given.
-  ProtoRef flow_property = 7;
-
-  bool input = 8;
-
-  // Indicates whether the exchange is the quantitative reference of the
-  // process.
-  bool quantitative_reference = 9;
-
-  double base_uncertainty = 10;
-
-  // A default provider is a [Process] that is linked as the provider of a
+  // A default provider is a `Process` that is linked as the provider of a
   // product input or the waste treatment provider of a waste output. It is
   // just an optional default setting which can be also ignored when building
   // product systems in openLCA. The user is always free to link processes in
   // product systems ignoring these defaults (but the flows and flow directions
   // have to match of course).
-  ProtoRef default_provider = 11;
+  ProtoRef default_provider = 8;
 
-  double amount = 12;
-
-  string amount_formula = 13;
-
-  ProtoRef unit = 14;
+  // A general comment about the input or output.
+  string description = 9;
 
   // A data quality entry like `(1;3;2;5;1)`. The entry is a vector of data
   // quality values that need to match the data quality scheme for flow inputs
-  // and outputs that is assigned to the [Process]. In such a scheme the data
+  // and outputs that is assigned to the `Process`. In such a scheme the data
   // quality indicators have fixed positions and the respective values in the
   // `dqEntry` vector map to these positions.
-  string dq_entry = 15;
+  string dq_entry = 10;
 
-  ProtoUncertainty uncertainty = 16;
+  // The reference to the flow of the exchange.
+  ProtoRef flow = 11;
 
-  // A general comment about the input or output.
-  string description = 17;
+  // The quantity in which the amount is given.
+  ProtoRef flow_property = 12;
+
+  // The process internal ID of the exchange. This is used to identify
+  // exchanges unambiguously within a process (e.g. when linking exchanges in a
+  // product system where multiple exchanges with the same flow are allowed).
+  // The value should be >= 1.
+  int32 internal_id = 13;
+
+  // Indicates whether this exchange is an avoided product.
+  bool is_avoided_product = 14;
+
+  bool is_input = 15;
+
+  // Indicates whether the exchange is the quantitative reference of the
+  // process.
+  bool is_quantitative_reference = 16;
+
+  ProtoRef location = 17;
+
+  ProtoUncertainty uncertainty = 18;
+
+  ProtoRef unit = 19;
 
 }
 
@@ -433,7 +409,7 @@ message ProtoExchange {
 message ProtoExchangeRef {
 
   // The internal ID of the exchange.
-  int32 internal_id = 1;
+  int32 internal_id = 2;
 
 }
 
@@ -442,67 +418,63 @@ message ProtoExchangeRef {
 message ProtoFlow {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
-
-  // The type of the flow. Note that this type is more a descriptor of how the
-  // flow is handled in calculations.
-  ProtoFlowType flow_type = 10;
+  string version = 8;
 
   // A CAS number of the flow.
-  string cas = 11;
-
-  // A chemical formula of the flow.
-  string formula = 12;
+  string cas = 10;
 
   // The flow properties (quantities) in which amounts of the flow can be
   // expressed together with conversion factors between these flow flow
   // properties.
-  repeated ProtoFlowPropertyFactor flow_properties = 13;
+  repeated ProtoFlowPropertyFactor flow_properties = 11;
 
-  // The location of the flow. Normally the location of a flow is defined by
-  // the process location where the flow is an input or output. However, some
-  // data formats define a location as a property of a flow.
-  ProtoRef location = 14;
+  // The type of the flow. Note that this type is more a descriptor of how the
+  // flow is handled in calculations.
+  ProtoFlowType flow_type = 12;
 
-  // A list of synonyms but packed into a single field. Best is to use
-  // semicolons as separator as commas are sometimes used in names of
-  // chemicals.
-  string synonyms = 15;
+  // A chemical formula of the flow.
+  string formula = 13;
 
   // Indicates whether this flow describes an infrastructure product. This
   // field is part of the openLCA schema because of backward compatibility with
   // EcoSpold 1. It does not really have a meaning in openLCA and should not be
   // used anymore.
-  bool infrastructure_flow = 16;
+  bool is_infrastructure_flow = 14;
+
+  // The location of the flow. Normally the location of a flow is defined by
+  // the process location where the flow is an input or output. However, some
+  // data formats define a location as a property of a flow.
+  ProtoRef location = 15;
+
+  // A list of synonyms but packed into a single field. Best is to use
+  // semicolons as separator as commas are sometimes used in names of
+  // chemicals.
+  string synonyms = 16;
 
 }
 
@@ -510,46 +482,57 @@ message ProtoFlow {
 message ProtoFlowMap {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The reference (id, name, description) of the source flow list.
-  ProtoRef source = 6;
-
-  // The reference (id, name, description) of the target flow list.
-  ProtoRef target = 7;
+  string version = 8;
 
   // A list of flow mappings from flows in a source flow list to flows in a
   // target flow list.
-  repeated ProtoFlowMapEntry mappings = 8;
+  repeated ProtoFlowMapEntry mappings = 10;
+
+  // The reference (id, name, description) of the source flow list.
+  ProtoRef source = 11;
+
+  // The reference (id, name, description) of the target flow list.
+  ProtoRef target = 12;
 
 }
 
 // A mapping from a source flow to a target flow.
 message ProtoFlowMapEntry {
 
-  // Describes the source flow of the mapping.
-  ProtoFlowMapRef from = 1;
-
-  // Describes the target of the mapping.
-  ProtoFlowMapRef to = 2;
-
   // The conversion factor to convert the amount of 1 unit of the source flow
   // into the corresponding quantity of the target flow.
-  double conversion_factor = 3;
+  double conversion_factor = 2;
+
+  // Describes the source flow of the mapping.
+  ProtoFlowMapRef from = 3;
+
+  // Describes the target of the mapping.
+  ProtoFlowMapRef to = 4;
 
 }
 
@@ -561,21 +544,21 @@ message ProtoFlowMapEntry {
 message ProtoFlowMapRef {
 
   // The reference to the flow data set.
-  ProtoRef flow = 1;
+  ProtoRef flow = 2;
 
   // An optional reference to a flow property of the flow for which the mapping
   // is valid.
-  ProtoRef flow_property = 2;
+  ProtoRef flow_property = 3;
 
   // An optional reference to a unit of the flow for which the mapping is valid
-  ProtoRef unit = 3;
+  ProtoRef unit = 4;
 
   // In case of a product or waste flow a flow mapping can contain a provider
   // which is the process that produces the product or a waste treatment
   // process that consumes the waste flow. This is useful when we want to apply
   // mappings of product and waste flows on databases and link them in the
   // corresponding processes and product systems.
-  ProtoRef provider = 4;
+  ProtoRef provider = 5;
 
 }
 
@@ -583,36 +566,32 @@ message ProtoFlowMapRef {
 message ProtoFlowProperty {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
+  string version = 8;
 
   // The type of the flow property
   ProtoFlowPropertyType flow_property_type = 10;
@@ -623,31 +602,27 @@ message ProtoFlowProperty {
 
 }
 
-// A FlowPropertyFactor is a conversion factor between <a
-// href="./FlowProperty.html">flow properties (quantities)</a> of a <a
-// href="./Flow.html">flow</a>. As an example the amount of the flow 'water' in
-// a process could be expressed in 'kg' mass or 'm3' volume. In this case the
-// flow water would have two flow property factors: one for the flow property
-// 'mass' and one for 'volume'. Each of these flow properties has a reference
-// to a <a href="./UnitGroup.html">unit group</a> which again has a reference
-// unit. In the example the flow property 'mass' could reference the unit group
-// 'units of mass' with 'kg' as reference unit and volume could reference the
-// unit group 'units of volume' with 'm3' as reference unit. The flow property
-// factor is now the conversion factor between these two reference units where
-// the factor of the reference flow property of the flow is 1. If the reference
-// flow property of 'water' in the example would be 'mass' the respective flow
-// property factor would be 1 and the factor for 'volume' would be 0.001 (as 1
-// kg water is 0.001 m3). The amount of water in a process can now be also
-// given in liter, tons, grams etc. For this, the unit conversion factor of the
-// respective unit group can be used to convert into the reference unit (which
-// then can be used to convert to the reference unit of another flow property).
-// Another thing to note is that different flow properties can refer to the
-// same unit group (e.g. MJ upper calorific value and MJ lower calorific
-// value.)
+// A `FlowPropertyFactor` is a conversion factor between flow properties
+// (quantities; `FlowProperty`) of a flow (`Flow`). As an example the amount of
+// the flow 'water' in a process could be expressed in 'kg' mass or 'm3'
+// volume. In this case the flow water would have two flow property factors:
+// one for the flow property 'mass' and one for 'volume'. Each of these flow
+// properties has a reference to a unit group (`UnitGroup`) which again has a
+// reference unit. In the example the flow property 'mass' could reference the
+// unit group 'units of mass' with 'kg' as reference unit and volume could
+// reference the unit group 'units of volume' with 'm3' as reference unit. The
+// flow property factor is now the conversion factor between these two
+// reference units where the factor of the reference flow property of the flow
+// is 1. If the reference flow property of 'water' in the example would be
+// 'mass' the respective flow property factor would be 1 and the factor for
+// 'volume' would be 0.001 (as 1 kg water is 0.001 m3). The amount of water in
+// a process can now be also given in liter, tons, grams etc. For this, the
+// unit conversion factor of the respective unit group can be used to convert
+// into the reference unit (which then can be used to convert to the reference
+// unit of another flow property). Another thing to note is that different flow
+// properties can refer to the same unit group (e.g. MJ upper calorific value
+// and MJ lower calorific value.)
 message ProtoFlowPropertyFactor {
-
-  // The flow property (quantity) of the factor.
-  ProtoRef flow_property = 1;
 
   // The value of the conversion factor.
   double conversion_factor = 2;
@@ -655,7 +630,10 @@ message ProtoFlowPropertyFactor {
   // Indicates whether the flow property of the factor is the reference flow
   // property of the flow. The reference flow property must have a conversion
   // factor of 1.0 and there should be only one reference flow property.
-  bool reference_flow_property = 3;
+  bool is_ref_flow_property = 3;
+
+  // The flow property (quantity) of the factor.
+  ProtoRef flow_property = 4;
 
 }
 
@@ -672,21 +650,33 @@ enum ProtoFlowPropertyType {
 
 }
 
-// A result value for a flow; given in the reference unit of the flow.
+// A calculation result of a flow.
 message ProtoFlowResult {
 
+  double amount = 2;
+
+  string description = 3;
+
   // The flow reference.
-  ProtoRef flow = 1;
+  ProtoRef flow = 4;
+
+  // The flow property in which the amount of the result is given. If missing,
+  // the amount is expected to be given in the reference flow property of the
+  // flow.
+  ProtoRef flow_property = 5;
 
   // Indicates whether the flow is an input or not.
-  bool input = 2;
+  bool is_input = 6;
 
-  // The value of the flow amount.
-  double value = 3;
+  // `true` if this is the quantitative reference flow of the result.
+  bool is_ref_flow = 7;
 
-  // The (reference to the) location of this flow result in case of a
-  // regionalized result.
-  ProtoRef location = 4;
+  // The location of this flow result in case of a regionalized result.
+  ProtoRef location = 8;
+
+  // The unit in which the amount of the result is given. If missing, the
+  // amount is expected to be given in the reference unit of the flow.
+  ProtoRef unit = 9;
 
 }
 
@@ -708,46 +698,49 @@ enum ProtoFlowType {
 message ProtoImpactCategory {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
+  string version = 8;
 
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
+  string code = 10;
 
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
-
-  // The name of the reference unit of the LCIA category (e.g. kg CO2-eq.).
-  string reference_unit_name = 10;
+  // The characterisation factors of the LCIA category.
+  repeated ProtoImpactFactor impact_factors = 11;
 
   // A set of parameters which can be used in formulas of the characterisation
   // factors in this impact category.
-  repeated ProtoParameter parameters = 11;
+  repeated ProtoParameter parameters = 12;
 
-  // The characterisation factors of the LCIA category.
-  repeated ProtoImpactFactor impact_factors = 12;
+  // The name of the reference unit of the LCIA category (e.g. kg CO2-eq.).
+  string ref_unit = 13;
+
+  // The impact direction of this impact category.
+  ProtoDirection direction = 14;
+
+  ProtoRef source = 15;
 
 }
 
@@ -755,26 +748,26 @@ message ProtoImpactCategory {
 message ProtoImpactFactor {
 
   // The [Flow] of the impact assessment factor.
-  ProtoRef flow = 1;
-
-  // In case of a regionalized impact category, this field can contain the
-  // location for which this factor is valid.
-  ProtoRef location = 2;
+  ProtoRef flow = 2;
 
   // The quantity of the flow to which the LCIA factor is related (e.g. Mass).
   ProtoRef flow_property = 3;
 
+  // In case of a regionalized impact category, this field can contain the
+  // location for which this factor is valid.
+  ProtoRef location = 4;
+
   // The flow unit to which the LCIA factor is related (e.g. kg).
-  ProtoRef unit = 4;
+  ProtoRef unit = 5;
 
   // The value of the impact assessment factor.
-  double value = 5;
+  double value = 6;
 
   // A mathematical formula for calculating the value of the LCIA factor.
-  string formula = 6;
+  string formula = 7;
 
   // The uncertainty distribution of the factors' value.
-  ProtoUncertainty uncertainty = 7;
+  ProtoUncertainty uncertainty = 8;
 
 }
 
@@ -782,53 +775,55 @@ message ProtoImpactFactor {
 message ProtoImpactMethod {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
+  string version = 8;
 
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
+  string code = 10;
 
   // The impact categories of the method.
-  repeated ProtoRef impact_categories = 10;
+  repeated ProtoRef impact_categories = 11;
 
   // The normalization and weighting sets of the method.
-  repeated ProtoNwSet nw_sets = 11;
+  repeated ProtoNwSet nw_sets = 12;
+
+  ProtoRef source = 13;
 
 }
 
-// A result value for an impact assessment category.
+// A calculation result of an impact assessment category.
 message ProtoImpactResult {
 
-  // The reference to the impact assessment category.
-  ProtoRef impact_category = 1;
+  // The value the result.
+  double amount = 2;
 
-  // The value of the flow amount.
-  double value = 2;
+  string description = 3;
+
+  // The impact assessment category.
+  ProtoRef indicator = 4;
 
 }
 
@@ -836,45 +831,41 @@ message ProtoImpactResult {
 message ProtoLocation {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
+  string version = 8;
 
   // The code of the location (e.g. an ISO 2-letter country code).
   string code = 10;
 
   // The average latitude of the location.
-  double latitude = 11;
+  optional double latitude = 11;
 
   // The average longitude of the location.
-  double longitude = 12;
+  optional double longitude = 12;
 
   // A GeoJSON object.
   // When we map to the bytes type it means that we have no matching message
@@ -887,16 +878,16 @@ message ProtoLocation {
 
 }
 
-// A normalization and weighting factor of a [NwSet] related to an impact
-// category. Depending on the purpose of the [NwSet] (normalization, weighting,
+// A normalization and weighting factor of a `NwSet` related to an impact
+// category. Depending on the purpose of the `NwSet` (normalization, weighting,
 // or both) the normalization and weighting factor can be present or not.
 message ProtoNwFactor {
 
-  ProtoRef impact_category = 1;
+  ProtoRef impact_category = 2;
 
-  double normalisation_factor = 2;
+  optional double normalisation_factor = 3;
 
-  double weighting_factor = 3;
+  optional double weighting_factor = 4;
 
 }
 
@@ -904,28 +895,20 @@ message ProtoNwFactor {
 message ProtoNwSet {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
 
-  // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
-  // fields are optional and the fields may have leading zeros (so 01.00.00 is
-  // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
+  // The list of normalization and weighting factors of this set.
+  repeated ProtoNwFactor factors = 5;
 
   // This is the optional unit of the (normalized and) weighted score when this
   // normalization and weighting set was applied on a LCIA result.
   string weighted_score_unit = 6;
-
-  // The list of normalization and weighting factors of this set.
-  repeated ProtoNwFactor factors = 7;
 
 }
 
@@ -940,54 +923,50 @@ message ProtoNwSet {
 message ProtoParameter {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
+  string version = 8;
 
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
-
-  // The scope where the parameter is valid.
-  ProtoParameterScope parameter_scope = 10;
+  // A mathematical expression to calculate the parameter value.
+  string formula = 10;
 
   // Indicates whether the parameter is an input parameter (true) or a
   // dependent/calculated parameter (false). A parameter can have a formula if
   // it is not an input parameter.
-  bool input_parameter = 11;
+  bool is_input_parameter = 11;
 
-  // The parameter value.
-  double value = 12;
-
-  // A mathematical expression to calculate the parameter value.
-  string formula = 13;
+  // The scope where the parameter is valid.
+  ProtoParameterScope parameter_scope = 12;
 
   // An uncertainty distribution of the parameter value. This is only valid for
   // input parameters.
-  ProtoUncertainty uncertainty = 14;
+  ProtoUncertainty uncertainty = 13;
+
+  // The parameter value.
+  double value = 14;
 
 }
 
@@ -996,22 +975,24 @@ message ProtoParameterRedef {
 
   // The context of the paramater (a process or LCIA method). If no context is
   // provided it is assumed that this is a redefinition of a global parameter.
-  ProtoRef context = 1;
+  ProtoRef context = 2;
 
   // A description of this parameter redefinition.
-  string description = 2;
+  string description = 3;
+
+  bool is_protected = 4;
 
   // The name of the redefined parameter. Note that parameter names are used in
   // formulas so they need to follow specific syntax rules. A redefinition
   // replaces a bound parameter in a specific context and thus has to exactly
   // match the respective name.
-  string name = 3;
+  string name = 5;
 
   // An uncertainty distribution for the redefined parameter value.
-  ProtoUncertainty uncertainty = 4;
+  ProtoUncertainty uncertainty = 6;
 
   // The value of the redefined parameter.
-  double value = 5;
+  double value = 7;
 
 }
 
@@ -1021,9 +1002,6 @@ message ProtoParameterRedef {
 // calculation the baseline set is then taken by default.
 message ProtoParameterRedefSet {
 
-  // The name of the parameter set.
-  string name = 1;
-
   // A description of the parameter set.
   string description = 2;
 
@@ -1031,8 +1009,11 @@ message ProtoParameterRedefSet {
   // product system.
   bool is_baseline = 3;
 
+  // The name of the parameter set.
+  string name = 4;
+
   // The parameter redefinitions of this redefinition set.
-  repeated ProtoParameterRedef parameters = 4;
+  repeated ProtoParameterRedef parameters = 5;
 
 }
 
@@ -1062,36 +1043,32 @@ enum ProtoParameterScope {
 message ProtoProcess {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
+  string version = 8;
 
   repeated ProtoAllocationFactor allocation_factors = 10;
 
@@ -1119,16 +1096,16 @@ message ProtoProcess {
 
   ProtoProcessType process_type = 17;
 
-  // A reference to a data quality system ([DQSystem]) with which the overall
+  // A reference to a data quality system (`DQSystem`) with which the overall
   // quality of the process can be assessed.
   ProtoRef dq_system = 18;
 
-  // A reference to a data quality system ([DQSystem]) with which the quality
-  // of individual inputs and outputs ([Exchange]s) of the process can be
+  // A reference to a data quality system (`DQSystem`) with which the quality
+  // of individual inputs and outputs (`Exchange`) of the process can be
   // assessed.
   ProtoRef exchange_dq_system = 19;
 
-  // A reference to a data quality system ([DQSystem]) with which the quality
+  // A reference to a data quality system (`DQSystem`) with which the quality
   // of individual social aspects of the process can be assessed.
   ProtoRef social_dq_system = 20;
 
@@ -1143,7 +1120,7 @@ message ProtoProcess {
   // field is part of the openLCA schema because of backward compatibility with
   // EcoSpold 1. It does not really have a meaning in openLCA and should not be
   // used anymore.
-  bool infrastructure_process = 22;
+  bool is_infrastructure_process = 22;
 
   // A set of social aspects related to this process.
   repeated ProtoSocialAspect social_aspects = 23;
@@ -1152,73 +1129,73 @@ message ProtoProcess {
 
 message ProtoProcessDocumentation {
 
-  string time_description = 1;
+  string completeness_description = 2;
 
-  string valid_until = 2;
+  string creation_date = 3;
 
-  string valid_from = 3;
+  string data_collection_description = 4;
 
-  string technology_description = 4;
+  ProtoRef data_documentor = 5;
 
-  string data_collection_description = 5;
-
-  string completeness_description = 6;
+  ProtoRef data_generator = 6;
 
   string data_selection_description = 7;
 
-  string review_details = 8;
+  ProtoRef data_set_owner = 8;
 
   string data_treatment_description = 9;
 
-  string inventory_method_description = 10;
+  string geography_description = 10;
 
-  string modeling_constants_description = 11;
+  string intended_application = 11;
 
-  ProtoRef reviewer = 12;
+  string inventory_method_description = 12;
 
-  string sampling_description = 13;
+  bool is_copyright_protected = 13;
 
-  repeated ProtoRef sources = 14;
+  string modeling_constants_description = 14;
 
-  string restrictions_description = 15;
+  string project_description = 15;
 
-  bool copyright = 16;
+  ProtoRef publication = 16;
 
-  string creation_date = 17;
+  string restrictions_description = 17;
 
-  ProtoRef data_documentor = 18;
+  string review_details = 18;
 
-  ProtoRef data_generator = 19;
+  ProtoRef reviewer = 19;
 
-  ProtoRef data_set_owner = 20;
+  string sampling_description = 20;
 
-  string intended_application = 21;
+  repeated ProtoRef sources = 21;
 
-  string project_description = 22;
+  string technology_description = 22;
 
-  ProtoRef publication = 23;
+  string time_description = 23;
 
-  string geography_description = 24;
+  string valid_from = 24;
+
+  string valid_until = 25;
 
 }
 
 // A process link is a connection between two processes in a product system.
 message ProtoProcessLink {
 
-  // The descriptor of the process or product system that provides a product or
-  // a waste treatment.
-  ProtoRef provider = 1;
-
-  // The descriptor of the flow that is exchanged between the two processes.
-  ProtoRef flow = 2;
-
-  // The descriptor of the process that is linked to the provider.
-  ProtoRef process = 3;
-
   // The exchange of the linked process (this is useful if the linked process
   // has multiple exchanges with the same flow that are linked to different
   // provides, e.g. in an electricity mix).
-  ProtoExchangeRef exchange = 4;
+  ProtoExchangeRef exchange = 2;
+
+  // The descriptor of the flow that is exchanged between the two processes.
+  ProtoRef flow = 3;
+
+  // The descriptor of the process that is linked to the provider.
+  ProtoRef process = 4;
+
+  // A reference to a process, product system, or result that provides the
+  // product or a waste (treatment) flow.
+  ProtoRef provider = 5;
 
 }
 
@@ -1239,160 +1216,209 @@ enum ProtoProcessType {
 message ProtoProductSystem {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
-
-  // The descriptors of all processes and sub-systems that are contained in the
-  // product system.
-  repeated ProtoRef processes = 10;
-
-  // The descriptor of the process that provides the flow of the functional
-  // unit of the product system.
-  ProtoRef reference_process = 11;
-
-  // The exchange of the reference processes (typically the product output)
-  // that provides the flow of the functional unit of the product system.
-  ProtoExchangeRef reference_exchange = 12;
-
-  // The flow amount of the functional unit of the product system.
-  double target_amount = 13;
-
-  // The unit in which the flow amount of the functional unit is given.
-  ProtoRef target_unit = 14;
-
-  // The flow property in which the flow amount of the functional unit is
-  // given.
-  ProtoRef target_flow_property = 15;
-
-  // The process links of the product system.
-  repeated ProtoProcessLink process_links = 16;
+  string version = 8;
 
   // A list of possible sets of parameter redefinitions for this product
   // system.
-  repeated ProtoParameterRedefSet parameter_sets = 17;
+  repeated ProtoParameterRedefSet parameter_sets = 10;
+
+  // The process links of the product system.
+  repeated ProtoProcessLink process_links = 11;
+
+  // The descriptors of all processes and sub-systems that are contained in the
+  // product system.
+  repeated ProtoRef processes = 12;
+
+  // The exchange of the reference processes (typically the product output)
+  // that provides the flow of the functional unit of the product system.
+  ProtoExchangeRef ref_exchange = 13;
+
+  // The descriptor of the process that provides the flow of the functional
+  // unit of the product system.
+  ProtoRef ref_process = 14;
+
+  // The flow amount of the functional unit of the product system.
+  double target_amount = 15;
+
+  // The flow property in which the flow amount of the functional unit is
+  // given.
+  ProtoRef target_flow_property = 16;
+
+  // The unit in which the flow amount of the functional unit is given.
+  ProtoRef target_unit = 17;
 
 }
 
 message ProtoProject {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
+  string version = 8;
 
   ProtoRef impact_method = 10;
 
-  ProtoNwSet nw_set = 11;
+  bool is_with_costs = 11;
+
+  bool is_with_regionalization = 12;
+
+  ProtoNwSet nw_set = 13;
+
+  repeated ProtoProjectVariant variants = 14;
 
 }
 
-// A Ref is a reference to a [RootEntity]. When serializing an entity (e.g. a
-// [Process]) that references another standalone entity (e.g. a [Flow] in an
-// [Exchange]) we do not want to write the complete referenced entity into the
+message ProtoProjectVariant {
+
+  ProtoAllocationType allocation_method = 2;
+
+  double amount = 3;
+
+  string description = 4;
+
+  bool is_disabled = 5;
+
+  string name = 6;
+
+  repeated ProtoParameterRedef parameter_redefs = 7;
+
+  ProtoRef product_system = 8;
+
+  ProtoRef unit = 9;
+
+}
+
+// A `Ref` is a reference to some entity. When serializing an entity (e.g. a
+// `Process`) that references another standalone entity (e.g. a `Flow` in an
+// `Exchange`) we do not want to write the complete referenced entity into the
 // serialized JSON object but just a reference. However, the reference contains
 // some meta-data like name, category path etc. that are useful to display.
 message ProtoRef {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // The category path of the referenced entity, e.g. `Elementary
+  // flows/Emissions to air/unspecified`.
+  string category = 5;
+
+  // This field is valid for references to entities which can have a
+  // (reference) unit, like flows, impact categories, or flow properties.
+  string ref_unit = 6;
+
+  // This field is only valid for references of processes or flows and contains
+  // the location name or code of that respective process or flow.
+  string location = 7;
+
+  // In case of a reference to a flow, this field can contain the type of flow
+  // that is referenced.
+  ProtoFlowType flow_type = 8;
+
+  // In case of a reference to a process, this fiel can contain the type of
+  // process that is referenced.
+  ProtoProcessType process_type = 9;
+
+}
+
+// A calculation result of a product system.
+message ProtoResult {
+
+  // The reference ID (typically an UUID) of the entity.
+  string id = 2 [json_name = "@id"];
+
+  // The name of the entity.
+  string name = 3;
+
+  // The description of the entity.
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
+  string version = 8;
 
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
+  // An array of `FlowResult` objects.
+  repeated ProtoFlowResult flow_results = 10;
 
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
+  // A reference to the `ImpactMethod` that was used to calculate the result.
+  ProtoRef impact_method = 11;
 
-  // The full path of the category of the referenced entity from top to bottom,
-  // e.g. `"Elementary flows", "Emissions to air", "unspecified"`.
-  repeated string category_path = 7;
+  // An array of `ImpactResult` objects.1
+  repeated ProtoImpactResult impact_results = 12;
 
-  // If the entity that is described by this reference is part of a library,
-  // this field contains the identifier of that library. The identifier is
-  // typically just the combination of the library name and version.
-  string library = 8;
-
-  // This field is only valid for references of flows or impact categories and
-  // contains the name (symbol) of the reference unit of that respective flow
-  // or impact category.
-  string ref_unit = 9;
-
-  // This field is only valid for references of processes or flows and contains
-  // the location name or code of that respective process or flow.
-  string location = 10;
-
-  // In case of a reference to a flow, this field can contain the type of flow
-  // that is referenced.
-  ProtoFlowType flow_type = 11;
-
-  // In case of a reference to a process, this fiel can contain the type of
-  // process that is referenced.
-  ProtoProcessType process_type = 12;
+  // A reference to the `ProductSystem` from which this result was calculated.
+  ProtoRef product_system = 13;
 
 }
 
@@ -1428,86 +1454,74 @@ enum ProtoRiskLevel {
 
 }
 
-message ProtoSimpleResult {
-
-  repeated ProtoFlowResult flow_results = 1;
-
-  repeated ProtoImpactResult impact_results = 2;
-
-}
-
 // An instance of this class describes a social aspect related to a social
 // indicator in a process.
 message ProtoSocialAspect {
 
   // The value of the activity variable of the related indicator.
-  double activity_value = 1;
+  double activity_value = 2;
 
-  string comment = 2;
+  string comment = 3;
 
   // A data quality entry, e.g. `(3,1,2,4,1)`.
-  string quality = 3;
+  string quality = 4;
 
   // The raw amount of the indicator's unit of measurement (not required to be
   // numeric currently)
-  string raw_amount = 4;
+  string raw_amount = 5;
 
-  ProtoRiskLevel risk_level = 5;
+  ProtoRiskLevel risk_level = 6;
 
-  ProtoRef social_indicator = 6;
+  ProtoRef social_indicator = 7;
 
-  ProtoRef source = 7;
+  ProtoRef source = 8;
 
 }
 
 message ProtoSocialIndicator {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
-
-  // The name of the activity variable of the indicator.
-  string activity_variable = 10;
+  string version = 8;
 
   // The quantity of the activity variable.
-  ProtoRef activity_quantity = 11;
+  ProtoRef activity_quantity = 10;
 
   // The unit of the activity variable.
-  ProtoRef activity_unit = 12;
+  ProtoRef activity_unit = 11;
 
-  // The unit in which the indicator is measured.
-  string unit_of_measurement = 13;
+  // The name of the activity variable of the indicator.
+  string activity_variable = 12;
 
   // Documentation of the evaluation scheme of the indicator.
-  string evaluation_scheme = 14;
+  string evaluation_scheme = 13;
+
+  // The unit in which the indicator is measured.
+  string unit_of_measurement = 14;
 
 }
 
@@ -1515,48 +1529,44 @@ message ProtoSocialIndicator {
 message ProtoSource {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
+  string version = 8;
 
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
-
-  // A URL that points to the source.
-  string url = 10;
+  // A direct link (relative or absolute URL) to the source file.
+  string external_file = 10;
 
   // The full text reference of the source.
   string text_reference = 11;
 
-  // The publication year of the source.
-  int32 year = 12;
+  // A URL that points to the source.
+  string url = 12;
 
-  // A direct link (relative or absolute URL) to the source file.
-  string external_file = 13;
+  // The publication year of the source.
+  optional int32 year = 13;
 
 }
 
@@ -1565,49 +1575,28 @@ message ProtoSource {
 message ProtoUncertainty {
 
   // The uncertainty distribution type
-  ProtoUncertaintyType distribution_type = 1;
-
-  // The arithmetic mean (used for normal distributions).
-  double mean = 2;
-
-  // A mathematical formula for the arithmetic mean.
-  string mean_formula = 3;
+  ProtoUncertaintyType distribution_type = 2;
 
   // The geometric mean value (used for log-normal distributions).
-  double geom_mean = 4;
-
-  // A mathematical formula for the geometric mean.
-  string geom_mean_formula = 5;
-
-  // The minimum value (used for uniform and triangle distributions).
-  double minimum = 6;
-
-  // A mathematical formula for the minimum value.
-  string minimum_formula = 7;
-
-  // The arithmetic standard deviation (used for normal distributions).
-  double sd = 8;
-
-  // A mathematical formula for the arithmetic standard deviation.
-  string sd_formula = 9;
+  optional double geom_mean = 3;
 
   // The geometric standard deviation (used for log-normal distributions).
-  double geom_sd = 10;
-
-  // A mathematical formula for the geometric standard deviation.
-  string geom_sd_formula = 11;
-
-  // The most likely value (used for triangle distributions).
-  double mode = 12;
-
-  // A mathematical formula for the most likely value.
-  string mode_formula = 13;
+  optional double geom_sd = 4;
 
   // The maximum value (used for uniform and triangle distributions).
-  double maximum = 14;
+  optional double maximum = 5;
 
-  // A mathematical formula for the maximum value.
-  string maximum_formula = 15;
+  // The arithmetic mean (used for normal distributions).
+  optional double mean = 6;
+
+  // The minimum value (used for uniform and triangle distributions).
+  optional double minimum = 7;
+
+  // The most likely value (used for triangle distributions).
+  optional double mode = 8;
+
+  // The arithmetic standard deviation (used for normal distributions).
+  optional double sd = 9;
 
 }
 
@@ -1633,35 +1622,27 @@ enum ProtoUncertaintyType {
 message ProtoUnit {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
-
-  // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
-  // fields are optional and the fields may have leading zeros (so 01.00.00 is
-  // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
+  string description = 4;
 
   // The conversion factor to the reference unit of the unit group to which
   // this unit belongs.
-  double conversion_factor = 6;
+  double conversion_factor = 5;
 
   // Indicates whether the unit is the reference unit of the unit group to
   // which this unit belongs. If it is the reference unit the conversion factor
   // must be 1.0. There should be always only one reference unit in a unit
   // group. The reference unit is used to convert amounts given in one unit to
   // amounts given in another unit of the respective unit group.
-  bool reference_unit = 7;
+  bool is_ref_unit = 6;
 
   // A list of synonyms for the unit.
-  repeated string synonyms = 8;
+  repeated string synonyms = 7;
 
 }
 
@@ -1669,36 +1650,32 @@ message ProtoUnit {
 message ProtoUnitGroup {
 
   // The reference ID (typically an UUID) of the entity.
-  string id = 1 [json_name = "@id"];
+  string id = 2 [json_name = "@id"];
 
   // The name of the entity.
-  string name = 2;
+  string name = 3;
 
   // The description of the entity.
-  string description = 3;
+  string description = 4;
+
+  // The type name of the respective entity.
+  ProtoType type = 1 [json_name = "@type"];
+
+  // A full path of the category. Forward slashes are used to separate the
+  // segments of this path, e.g. `Elementary flows/emissions/air/unspecified`.
+  string category = 5;
+
+  // The timestamp when the entity was changed the last time.
+  string last_change = 6;
+
+  // A list of optional tags. A tag is just a string which should not contain
+  // commas (and other special characters).
+  repeated string tags = 7;
 
   // A version number in MAJOR.MINOR.PATCH format where the MINOR and PATCH
   // fields are optional and the fields may have leading zeros (so 01.00.00 is
   // the same as 1.0.0 or 1).
-  string version = 4;
-
-  // The timestamp when the entity was changed the last time.
-  string last_change = 5;
-
-  // The type name of the respective entity.
-  ProtoType type = 6 [json_name = "@type"];
-
-  // The category of the entity.
-  ProtoRef category = 7;
-
-  // A list of optional tags. A tag is just a string which should not contain
-  // commas (and other special characters).
-  repeated string tags = 8;
-
-  // If this entity is part of a library, this field contains the identifier of
-  // that library. The identifier is typically just the combination of the
-  // library name and version.
-  string library = 9;
+  string version = 8;
 
   // Some LCA data formats do not have the concept of flow properties or
   // quantities. This field provides a default link to a flow property for
@@ -1711,31 +1688,6 @@ message ProtoUnitGroup {
 }
 
 
-
-// We map the openLCA ModelType to this enumeration type because it is only
-// used in the categories. In order to be compatible with the JSON-LD '@type'
-// field we use the ProtoType enumeration type
-enum ProtoCategoryType {
-
-  UNDEFINED_CATEGORY_TYPE = 0;
-  ACTOR = 1;
-  CURRENCY = 3;
-  DQ_SYSTEM = 4;
-  FLOW = 5;
-  FLOW_PROPERTY = 6;
-  IMPACT_CATEGORY = 7;
-  IMPACT_METHOD = 8;
-  LOCATION = 9;
-  PARAMETER = 11;
-  PROCESS = 12;
-  PRODUCT_SYSTEM = 13;
-  PROJECT = 14;
-  SOCIAL_INDICATOR = 15;
-  SOURCE = 16;
-  UNIT_GROUP = 18;
-	RESULT = 19;
-}
-
 // This enumeration type is added for compatibility with the @type attribute of
 // the openLCA JSON-LD format. In the proto messages we limit its usage to
 // instances of CategorizedEntity and Ref while it is allowed for every type in
@@ -1744,9 +1696,9 @@ enum ProtoCategoryType {
 enum ProtoType {
   Undefined = 0;
   Actor = 1;
-  Category = 2;
-  Currency = 3;
-  DQSystem = 4;
+  Currency = 2;
+  DQSystem = 3;
+  Epd = 4;
   Flow = 5;
   FlowProperty = 6;
   ImpactCategory = 7;
@@ -1757,7 +1709,7 @@ enum ProtoType {
   Process = 12;
   ProductSystem = 13;
   Project = 14;
-	Result = 15;
+  Result = 15;
   SocialIndicator = 16;
   Source = 17;
   Unit = 18;
